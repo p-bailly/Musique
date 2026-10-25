@@ -1,13 +1,10 @@
 /**
- * Plugin de configuration Expo : signe l'APK de release avec la clé personnelle
- * (jamais versionnée), et ne compile que pour les processeurs des téléphones
- * (APK plus léger).
+ * Plugin de configuration Expo : signe l'APK de release avec la clé personnelle,
+ * et ne compile que pour les processeurs des téléphones (APK plus léger).
  *
- * La clé est fournie par deux variables d'environnement, remplies sur GitHub
- * Actions à partir des secrets du dépôt (voir .github/workflows/apk.yml) :
- *   SOLFEGE_KEYSTORE_FILE      chemin du keystore PKCS12 (alias « solfege »)
- *   SOLFEGE_KEYSTORE_PASSWORD  son mot de passe
- * Sans ces variables, la release est signée avec la clé de debug (usage local).
+ * La clé (keystore/solfege-piano.keystore, alias « solfege ») est volontairement
+ * versionnée, comme pour NBA, Scan, Météo et Mes applis : tous les APK, construits
+ * sur GitHub ou en local, ont la même signature. Usage perso uniquement.
  *
  * Toujours la même clé : Android n'accepte une mise à jour que si elle est signée
  * avec la même clé que la version installée (indispensable pour « Mes applis »).
@@ -16,25 +13,23 @@ const { withAppBuildGradle, withGradleProperties } = require('expo/config-plugin
 
 const BLOC_SIGNATURE = `
         perso {
-            // Clé personnelle lue dans l'environnement (voir plugins/signature-perso.js)
-            if (System.getenv('SOLFEGE_KEYSTORE_FILE')) {
-                storeFile file(System.getenv('SOLFEGE_KEYSTORE_FILE'))
-                storePassword System.getenv('SOLFEGE_KEYSTORE_PASSWORD')
-                keyAlias 'solfege'
-                keyPassword System.getenv('SOLFEGE_KEYSTORE_PASSWORD')
-            }
+            // Clé personnelle versionnée (voir plugins/signature-perso.js)
+            storeFile rootProject.file('../keystore/solfege-piano.keystore')
+            storePassword 'solfege-perso'
+            keyAlias 'solfege'
+            keyPassword 'solfege-perso'
         }`;
 
 function avecSignature(config) {
   return withAppBuildGradle(config, (cfg) => {
     let g = cfg.modResults.contents;
-    if (!g.includes('SOLFEGE_KEYSTORE_FILE')) {
+    if (!g.includes('solfege-piano.keystore')) {
       // Ajoute la configuration « perso » à côté de « debug »
       g = g.replace(/signingConfigs\s*\{/, (m) => `${m}${BLOC_SIGNATURE}`);
       // La release utilise la clé perso au lieu de la clé de debug
       g = g.replace(
         /(release\s*\{[^}]*?)signingConfig signingConfigs\.debug/,
-        "$1signingConfig System.getenv('SOLFEGE_KEYSTORE_FILE') ? signingConfigs.perso : signingConfigs.debug",
+        "$1signingConfig signingConfigs.perso",
       );
     }
     cfg.modResults.contents = g;
