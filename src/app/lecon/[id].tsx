@@ -90,7 +90,8 @@ function Jeu({ leconId }: { leconId: string }) {
 
   // Le micro transmet les notes détectées au moteur de jeu
   const jouer = moteur.jouer;
-  const micro = useMicro({ onNote: (midi) => jouer(midi, 'micro') });
+  const jouerMicro = moteur.jouerMicro;
+  const micro = useMicro({ onNotes: jouerMicro });
   useEffect(() => {
     ignorerMicroRef.current = micro.ignorerUnInstant;
   }, [micro.ignorerUnInstant]);

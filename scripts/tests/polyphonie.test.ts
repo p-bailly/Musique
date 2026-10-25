@@ -84,17 +84,42 @@ ajouterA([48, 52, 55], 1.6);
 ajouterA([60], 2.6);
 ajouterA([60], 3.2);
 const emis: string[] = [];
-const suivi = new SuiviPolyphonique((midis) => emis.push(midis.join('+')));
+const suivi = new SuiviPolyphonique((midis) => emis.push([...midis].sort((a, b) => a - b).join('+')));
 for (let i = 0; i < sequence.length; i += 2048) suivi.ajouter(sequence.subarray(i, i + 2048), SR);
+
+// 4) Mélodie dans une pièce qui résonne, avec du bruit et un micro qui sature :
+// une seule frappe signalée par note jouée, la plus forte étant la bonne
+const MELODIE: [number, number][] = [[60, 1], [60, 1], [60, 1], [62, 1], [64, 2], [62, 2], [60, 1], [64, 1], [62, 1], [62, 1], [60, 4]];
+const noire = 60 / 90;
+const piece = new Float32Array(Math.ceil((MELODIE.reduce((t, n) => t + n[1], 0) * noire + 2) * SR));
+let instant = 0.3;
+for (const [m, d] of MELODIE) {
+  const s = son(m);
+  const debut = Math.floor(instant * SR);
+  const fin = Math.floor((instant + d * noire) * SR); // touche relâchée : l'étouffoir coupe le son
+  for (let i = 0; i < s.length && debut + i < piece.length; i++) {
+    piece[debut + i] += s[i] * 0.6 * (debut + i > fin ? Math.exp(-(debut + i - fin) / (0.08 * SR)) : 1);
+  }
+  instant += d * noire;
+}
+for (const [retard, gain] of [[2205, 0.6], [4410, 0.48], [7717, 0.36], [11025, 0.3]]) {
+  for (let i = piece.length - 1; i >= retard; i--) piece[i] += piece[i - retard] * gain;
+}
+for (let i = 0; i < piece.length; i++) piece[i] = Math.tanh(piece[i] * 3) + (Math.random() * 2 - 1) * 0.02;
+const frappes: number[] = [];
+const suiviMelodie = new SuiviPolyphonique((midis) => frappes.push(midis[0]));
+for (let i = 0; i < piece.length; i += 2048) suiviMelodie.ajouter(piece.subarray(i, i + 2048), SR);
+const melodieOk = frappes.join(' ') === MELODIE.map((n) => n[0]).join(' ');
 
 console.log(`notes seules : ${scoreSeules}`);
 console.log(`accords : ${okAccords}/${ACCORDS.length}`);
 console.log(`suivi : ${emis.join(' | ')}`);
+console.log(`mélodie dans une pièce bruyante : ${frappes.join(' ')}`);
 if (echecs.length) console.log(echecs.slice(0, 25).join('\n'));
 
 // Seuils de non-régression (le bruit ajouté est aléatoire : petite marge)
 const seules = Number(scoreSeules.split('/')[0]);
-if (seules < 57 || okAccords < 13 || emis.join(' | ') !== '60 | 64 | 48+52+55 | 60 | 60') {
+if (seules < 57 || okAccords < 13 || emis.join(' | ') !== '60 | 64 | 48+52+55 | 60 | 60' || !melodieOk) {
   console.error('polyphonie : RÉGRESSION');
   process.exit(1);
 }

@@ -98,7 +98,7 @@ export default function CartesFlash() {
   );
   useNotesMidi(jouee);
   const auMicro = reglages.entree === 'piano' && !midi.connecte;
-  const micro = useMicro({ onNote: jouee });
+  const micro = useMicro({ onNotes: (midis) => jouee(midis[0]) });
   const demarrerMicro = micro.demarrer;
   useEffect(() => {
     if (auMicro) demarrerMicro();

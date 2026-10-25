@@ -16,19 +16,23 @@ import { useRefActuelle } from './useRefActuelle';
 export type EtatMicro = 'eteint' | 'demarrage' | 'actif' | 'refuse' | 'erreur';
 
 interface Options {
-  /** Appelée à chaque note détectée (numéro MIDI). */
-  onNote: (midi: number) => void;
+  /**
+   * Appelée à chaque frappe entendue, avec les notes détectées (MIDI), de la plus forte
+   * à la plus faible : la première est la plus sûre, les suivantes peuvent être des
+   * harmoniques ou de la résonance.
+   */
+  onNotes: (midis: number[]) => void;
 }
 
-export function useMicro({ onNote }: Options) {
+export function useMicro({ onNotes }: Options) {
   const [etat, setEtat] = useState<EtatMicro>('eteint');
   const [niveau, setNiveau] = useState(0);
   const [derniereNote, setDerniereNote] = useState<number | null>(null);
-  /** Notes entendues en ce moment (pour l'écran de calibration). */
+  /** Notes de la dernière frappe entendue, la plus forte d'abord (écran de calibration). */
   const [entendues, setEntendues] = useState<number[]>([]);
   const { reglages } = useReglages();
 
-  const onNoteRef = useRefActuelle(onNote);
+  const onNotesRef = useRefActuelle(onNotes);
   /** Pendant ce délai, on ignore le micro (le haut-parleur vient de jouer un son). */
   const ignorerJusquA = useRef(0);
   const dernierRafraichissement = useRef(0);
@@ -37,10 +41,11 @@ export function useMicro({ onNote }: Options) {
   useEffect(() => {
     suivi.current = new SuiviPolyphonique((midis) => {
       if (Date.now() < ignorerJusquA.current) return;
-      setDerniereNote(midis[midis.length - 1]);
-      for (const m of midis) onNoteRef.current(m);
+      setDerniereNote(midis[0]);
+      setEntendues(midis);
+      onNotesRef.current(midis);
     });
-  }, [onNoteRef]);
+  }, [onNotesRef]);
 
   // Réglages de la calibration
   const { sensibiliteMicro, bruitMicro } = reglages;
@@ -61,7 +66,6 @@ export function useMicro({ onNote }: Options) {
       if (maintenant - dernierRafraichissement.current > 100) {
         dernierRafraichissement.current = maintenant;
         setNiveau(s.niveau);
-        setEntendues((e) => (e.join() === s.notesEntendues.join() ? e : s.notesEntendues));
       }
     },
   });

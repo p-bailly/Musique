@@ -275,8 +275,6 @@ export class SuiviPolyphonique {
 
   /** Dernier niveau sonore mesuré (0..1), pour un vumètre. */
   niveau = 0;
-  /** Notes entendues à la dernière analyse, pour l'affichage. */
-  notesEntendues: number[] = [];
 
   constructor(
     private readonly onNotes: (midis: number[]) => void,
@@ -313,7 +311,6 @@ export class SuiviPolyphonique {
     this.presentes.clear();
     this.signalees.clear();
     this.derniereEmission.clear();
-    this.notesEntendues = [];
   }
 
   /** Commence à mesurer le bruit de fond (silence) ; `terminerMesureBruit` renvoie le résultat. */
@@ -407,7 +404,7 @@ export class SuiviPolyphonique {
     }
     for (const m of nouvelles) this.signalees.set(m, 0);
     this.presentes = presentes;
-    this.notesEntendues = [...presentes.keys()].sort((a, b) => a - b);
-    if (nouvelles.length) this.onNotes(nouvelles.sort((a, b) => a - b));
+    // De la plus forte à la plus faible (ordre de l'analyse)
+    if (nouvelles.length) this.onNotes(nouvelles);
   }
 }

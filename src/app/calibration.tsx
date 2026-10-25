@@ -1,6 +1,6 @@
 /**
  * Calibration du micro : mesure du bruit de fond de la pièce, choix de la
- * sensibilité, puis essai en direct (les notes entendues s'affichent, accords compris).
+ * sensibilité, puis essai en direct (les notes de chaque frappe s'affichent, accords compris).
  */
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
@@ -19,7 +19,7 @@ const SENSIBILITES = [
 export default function Calibration() {
   const { reglages, modifier, couleurs: c } = useReglages();
   const [etape, setEtape] = useState<'attente' | 'silence' | 'fini'>('attente');
-  const micro = useMicro({ onNote: () => {} });
+  const micro = useMicro({ onNotes: () => {} });
 
   // Le micro écoute pendant tout l'écran
   const demarrer = micro.demarrer;
@@ -67,8 +67,8 @@ export default function Calibration() {
       <Carte style={styles.bloc}>
         <Text style={[styles.titre, { color: c.texte }]}>3. Essaie</Text>
         <Text style={[styles.texte, { color: c.texteDiscret }]}>
-          Joue une note, puis un accord (Do-Mi-Sol avec la main gauche, par exemple) : les notes entendues s’affichent
-          ci-dessous.
+          Joue une note, puis un accord (Do-Mi-Sol avec la main gauche, par exemple) : les notes reconnues à chaque
+          frappe s’affichent ci-dessous, la plus sûre en premier.
         </Text>
         <View style={[styles.vumetre, { backgroundColor: c.surfaceAlt }]}>
           <View style={[styles.niveau, { width: `${Math.round(micro.niveau * 100)}%`, backgroundColor: c.succes }]} />

@@ -41,7 +41,8 @@ export default function PianoLibre() {
   const midi = useMidi();
   const surPiano = reglages.entree === 'piano' || !!midi.connecte;
   const auMicro = reglages.entree === 'piano' && !midi.connecte;
-  const micro = useMicro({ onNote: ajouter });
+  // Au micro, seule la note la plus forte de chaque frappe s'affiche
+  const micro = useMicro({ onNotes: (midis) => ajouter(midis[0]) });
 
   // Sur un vrai piano, le micro s'allume tout seul
   const demarrerMicro = micro.demarrer;
