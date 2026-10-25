@@ -1,0 +1,83 @@
+name: APK
+
+# À chaque push : vérifications puis compilation de l'APK signé (clé perso versionnée dans keystore/).
+# Publication dans une release « apk-<numéro> » marquée comme la dernière, uniquement depuis la branche par
+# défaut du dépôt (les autres branches gardent l'APK en artefact). La nouvelle release est créée avant de
+# retirer les anciennes : il y a toujours un SolfegePiano.apk à télécharger (c'est ce que lit « Mes applis »).
+# Lien direct pour le téléphone : https://github.com/p-bailly/Musique/releases/latest/download/SolfegePiano.apk
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# Une file par branche : un push sur une autre branche n'annule pas la publication en cours.
+concurrency:
+  group: apk-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Dépendances et vérifications
+        run: |
+          npm ci
+          npx tsc --noEmit
+          npx expo lint
+
+      # Génère le projet Android natif (dossier android/, non versionné) avec la signature perso
+      # et un versionCode égal au numéro du build (voir app.config.js).
+      - name: Projet Android
+        run: npx expo prebuild -p android --no-install
+
+      - name: Compilation de l'APK
+        working-directory: android
+        env:
+          NODE_ENV: production
+        run: ./gradlew --no-daemon assembleRelease
+
+      - name: Renommer l'APK
+        run: cp android/app/build/outputs/apk/release/app-release.apk SolfegePiano.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: solfege-piano-apk
+          path: SolfegePiano.apk
+
+      - name: Publier l'APK
+        if: github.ref_name == github.event.repository.default_branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="apk-${GITHUB_RUN_NUMBER}"
+          gh release create "$TAG" SolfegePiano.apk \
+            --title "Solfège Piano – dernière version" \
+            --notes "APK compilé automatiquement depuis la branche ${GITHUB_REF_NAME} (commit ${GITHUB_SHA::7}). Ouvre ce lien depuis le téléphone pour l'installer." \
+            --target "$GITHUB_SHA" \
+            --latest \
+            || gh release upload "$TAG" SolfegePiano.apk --clobber
+          # Une release en brouillon n'est pas « la dernière version » : on s'assure qu'elle est publiée.
+          gh release edit "$TAG" --draft=false --latest
+          # Seulement ensuite, on retire les anciennes.
+          for old in $(gh release list --limit 100 --json tagName --jq '.[].tagName'); do
+            case "$old" in
+              "$TAG") ;;
+              apk-*) gh release delete "$old" --cleanup-tag --yes || true ;;
+            esac
+          done

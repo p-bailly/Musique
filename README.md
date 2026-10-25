@@ -56,7 +56,19 @@ d'entreprise, partage de connexion…) : `npx expo start --tunnel`.
 
 À la première utilisation du micro, acceptez l'autorisation demandée.
 
-## Installer l'application pour qu'elle apparaisse dans vos applications
+## Installer l'APK sur Android (et le suivre dans « Mes applis »)
+
+À chaque envoi sur la branche par défaut, GitHub Actions (`.github/workflows/apk.yml`) compile l'APK et le publie
+dans la dernière release du dépôt. Lien direct, à ouvrir depuis le téléphone :
+<https://github.com/p-bailly/Musique/releases/latest/download/SolfegePiano.apk>
+
+- L'APK est toujours signé avec la même clé personnelle (`keystore/solfege-piano.jks`, versionnée exprès, usage
+  perso uniquement) et son numéro de version augmente à chaque build : chaque nouvelle version s'installe
+  par-dessus la précédente, sans perdre la progression.
+- Pour que l'appli apparaisse dans « Mes applis » (dépôt Managing-Apps), ajouter dans `TrackedApps.kt` :
+  `TrackedApp("Solfège Piano", "p-bailly/Musique", "fr.solfegepiano.app", "SolfegePiano.apk"),`
+
+## Autres méthodes d'installation (EAS, iPhone)
 
 Expo Go sert à **tester** : l'appli tourne à l'intérieur d'Expo Go et n'a pas sa propre icône. Pour obtenir une
 vraie application « Solfège Piano » sur l'écran d'accueil, il faut la compiler avec **EAS Build** (service
