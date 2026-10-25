@@ -31,12 +31,12 @@ export default function Statistiques() {
   const maxMinutes = Math.max(5, ...semaine.map((j) => j.minutes));
 
   const tuiles = [
-    { valeur: `🔥 ${serieActuelle}`, legende: `jour${serieActuelle > 1 ? 's' : ''} d'affilée` },
-    { valeur: `🏆 ${p.serie.record}`, legende: 'record de série' },
-    { valeur: `⭐ ${totalEtoiles}/${TOUTES_LES_LECONS.length * 3}`, legende: 'étoiles' },
-    { valeur: `📚 ${leconsReussies}/${TOUTES_LES_LECONS.length}`, legende: 'leçons réussies' },
-    { valeur: `🎯 ${precision} %`, legende: 'précision' },
-    { valeur: `⏱ ${minutes} min`, legende: 'de pratique' },
+    { valeur: `${serieActuelle}`, legende: `jour${serieActuelle > 1 ? 's' : ''} d'affilée` },
+    { valeur: `${p.serie.record}`, legende: 'record de série' },
+    { valeur: `${totalEtoiles}/${TOUTES_LES_LECONS.length * 3}`, legende: 'étoiles' },
+    { valeur: `${leconsReussies}/${TOUTES_LES_LECONS.length}`, legende: 'leçons réussies' },
+    { valeur: `${precision} %`, legende: 'précision' },
+    { valeur: `${minutes} min`, legende: 'de pratique' },
   ];
 
   return (

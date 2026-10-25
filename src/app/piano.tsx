@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { jouerNote, prechargerSons } from '@/audio/piano';
 import { BoutonMicro } from '@/components/BoutonMicro';
 import { Clavier } from '@/components/Clavier';
+import { Icone } from '@/components/Icones';
 import { NotePortee, Portee } from '@/components/Portee';
 import { useMicro } from '@/hooks/useMicro';
 import { Cle, DO_CENTRAL, nomNote } from '@/music/notes';
@@ -85,7 +86,7 @@ export default function PianoLibre() {
             accessibilityLabel="Retour"
             style={[styles.rond, { backgroundColor: c.surfaceAlt, borderColor: c.bordure }]}
           >
-            <Text style={{ fontSize: 20, fontWeight: '900', color: c.texte }}>←</Text>
+            <Icone nom="retour" couleur={c.texte} />
           </Pressable>
           <BoutonMicro etat={micro.etat} niveau={micro.niveau} derniereNote={micro.derniereNote} onPress={() => (micro.etat === 'actif' ? micro.arreter() : micro.demarrer())} />
           <View style={styles.octaves}>

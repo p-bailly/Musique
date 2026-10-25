@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import React from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { Icone } from '@/components/Icones';
 import { Bouton, Carte, Etoiles } from '@/components/ui';
 import { NIVEAUX, Lecon, TOUTES_LES_LECONS } from '@/data/lecons';
 import { useProgression } from '@/store/Progression';
@@ -31,23 +32,23 @@ export default function Accueil() {
       <ScrollView contentContainerStyle={styles.contenu}>
         <View style={styles.entete}>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.titre, { color: c.texte }]}>🎹 Solfège Piano</Text>
+            <Text style={[styles.titre, { color: c.texte }]}>Solfège Piano</Text>
             <Text style={[styles.sousTitre, { color: c.texteDiscret }]}>Apprends à lire et jouer les notes</Text>
           </View>
           <View style={[styles.badge, { backgroundColor: c.surface, borderColor: c.bordure }]}>
-            <Text style={[styles.badgeTexte, { color: c.texte }]}>🔥 {serieActuelle}</Text>
+            <Text style={[styles.badgeTexte, { color: c.texte }]}>{serieActuelle}</Text>
             <Text style={[styles.badgeLegende, { color: c.texteDiscret }]}>jour{serieActuelle > 1 ? 's' : ''}</Text>
           </View>
           <View style={[styles.badge, { backgroundColor: c.surface, borderColor: c.bordure }]}>
-            <Text style={[styles.badgeTexte, { color: c.texte }]}>⭐ {totalEtoiles}</Text>
+            <Text style={[styles.badgeTexte, { color: c.texte }]}>{totalEtoiles}</Text>
             <Text style={[styles.badgeLegende, { color: c.texteDiscret }]}>étoiles</Text>
           </View>
         </View>
 
         <View style={styles.actions}>
-          <Bouton titre="🎹 Piano libre" onPress={() => router.push('/piano')} style={styles.action} />
-          <Bouton titre="📊 Progression" variante="secondaire" onPress={() => router.push('/stats')} style={styles.action} />
-          <Bouton titre="⚙️ Réglages" variante="secondaire" onPress={() => router.push('/reglages')} style={styles.action} />
+          <Bouton titre="Piano libre" onPress={() => router.push('/piano')} style={styles.action} />
+          <Bouton titre="Progression" variante="secondaire" onPress={() => router.push('/stats')} style={styles.action} />
+          <Bouton titre="Réglages" variante="secondaire" onPress={() => router.push('/reglages')} style={styles.action} />
         </View>
 
         {NIVEAUX.map((niveau) => (
@@ -69,9 +70,11 @@ export default function Accueil() {
                     style={({ pressed }) => [styles.carteLecon, { opacity: !ouverte ? 0.5 : pressed ? 0.8 : 1 }]}
                   >
                     <Carte style={styles.carteInterieur}>
-                      <Text style={[styles.numero, { color: c.primaire }]}>
-                        {ouverte ? `${niveau.numero}.${i + 1}` : '🔒'}
-                      </Text>
+                      {ouverte ? (
+                        <Text style={[styles.numero, { color: c.primaire }]}>{`${niveau.numero}.${i + 1}`}</Text>
+                      ) : (
+                        <Icone nom="cadenas" taille={24} couleur={c.texteDiscret} />
+                      )}
                       <Text style={[styles.titreLecon, { color: c.texte }]} numberOfLines={2}>
                         {lecon.titre}
                       </Text>
@@ -87,7 +90,7 @@ export default function Accueil() {
           </View>
         ))}
         <Text style={[styles.pied, { color: c.texteDiscret }]}>
-          Astuce : pose ton téléphone à l’horizontale sur le pupitre et joue sur ton piano, le micro 🎤 t’écoute. Tu
+          Astuce : pose ton téléphone à l’horizontale sur le pupitre et joue sur ton piano, le micro t’écoute. Tu
           peux aussi jouer sur l’écran (Réglages).
         </Text>
       </ScrollView>

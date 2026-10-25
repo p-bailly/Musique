@@ -45,11 +45,11 @@ export default function EcranReglages() {
   return (
     <ScrollView contentContainerStyle={styles.contenu}>
       <Carte style={styles.bloc}>
-        <Text style={[styles.titre, { color: c.texte }]}>🎹 Je joue…</Text>
+        <Text style={[styles.titre, { color: c.texte }]}>Je joue…</Text>
         <Choix<Entree>
           options={[
-            { valeur: 'piano', libelle: '🎹 Sur mon piano (micro)' },
-            { valeur: 'ecran', libelle: '📱 Sur l’écran' },
+            { valeur: 'piano', libelle: 'Sur mon piano (micro)' },
+            { valeur: 'ecran', libelle: 'Sur l’écran' },
           ]}
           valeur={reglages.entree}
           onChange={(v) => modifier({ entree: v })}
@@ -61,7 +61,7 @@ export default function EcranReglages() {
       </Carte>
 
       <Carte style={styles.bloc}>
-        <Text style={[styles.titre, { color: c.texte }]}>🐢 Vitesse des notes 🐇</Text>
+        <Text style={[styles.titre, { color: c.texte }]}>Vitesse des notes</Text>
         <Choix
           options={[
             { valeur: 0.5, libelle: '×0,5' },
@@ -77,25 +77,25 @@ export default function EcranReglages() {
 
       <Carte style={styles.bloc}>
         <Interrupteur
-          titre="⏳ Mode attente"
+          titre="Mode attente"
           detail="Le morceau s'arrête jusqu'à ce que tu joues la bonne note (certaines leçons de rythme le désactivent par défaut)."
           valeur={reglages.modeAttente}
           onChange={(v) => modifier({ modeAttente: v })}
         />
         <Interrupteur
-          titre="🔤 Noms des notes"
+          titre="Noms des notes"
           detail="Afficher Do, Ré, Mi… sur le clavier, les blocs et la portée. Masque-les pour t'entraîner à lire !"
           valeur={reglages.nomsNotes}
           onChange={(v) => modifier({ nomsNotes: v })}
         />
         <Interrupteur
-          titre="🔊 Son du clavier"
+          titre="Son du clavier"
           detail="Jouer le son du piano quand tu touches le clavier à l'écran (mode « sur l’écran »)."
           valeur={reglages.son}
           onChange={(v) => modifier({ son: v })}
         />
         <Interrupteur
-          titre="🔓 Toutes les leçons"
+          titre="Toutes les leçons"
           detail="Accéder à toutes les leçons sans devoir les débloquer dans l'ordre."
           valeur={reglages.toutDebloquer}
           onChange={(v) => modifier({ toutDebloquer: v })}
@@ -103,12 +103,12 @@ export default function EcranReglages() {
       </Carte>
 
       <Carte style={styles.bloc}>
-        <Text style={[styles.titre, { color: c.texte }]}>🎨 Thème</Text>
+        <Text style={[styles.titre, { color: c.texte }]}>Thème</Text>
         <Choix<ChoixTheme>
           options={[
             { valeur: 'systeme', libelle: 'Automatique' },
-            { valeur: 'clair', libelle: '☀️ Clair' },
-            { valeur: 'sombre', libelle: '🌙 Sombre' },
+            { valeur: 'clair', libelle: 'Clair' },
+            { valeur: 'sombre', libelle: 'Sombre' },
           ]}
           valeur={reglages.theme}
           onChange={(v) => modifier({ theme: v })}
@@ -116,7 +116,7 @@ export default function EcranReglages() {
       </Carte>
 
       <Carte style={styles.bloc}>
-        <Text style={[styles.titre, { color: c.texte }]}>🎤 Jouer sur un vrai piano</Text>
+        <Text style={[styles.titre, { color: c.texte }]}>Jouer sur un vrai piano</Text>
         <Text style={{ color: c.texteDiscret, fontSize: 15, lineHeight: 21 }}>
           Pose le téléphone sur le pupitre de ton piano : le micro s’allume tout seul (le bouton « Micro » permet de le couper). Joue une note à la fois, dans
           une pièce calme. L’octave n’est pas vérifiée au micro (seul le nom de la note compte).
