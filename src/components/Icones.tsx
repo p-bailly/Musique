@@ -3,9 +3,9 @@
  * et ont le même rendu sur tous les téléphones.
  */
 import React from 'react';
-import Svg, { Path, Rect } from 'react-native-svg';
+import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-export type NomIcone = 'retour' | 'lecture' | 'pause' | 'cadenas' | 'etoile';
+export type NomIcone = 'retour' | 'lecture' | 'pause' | 'cadenas' | 'etoile' | 'reglages';
 
 export function Icone({ nom, taille = 22, couleur }: { nom: NomIcone; taille?: number; couleur: string }) {
   return (
@@ -24,6 +24,13 @@ export function Icone({ nom, taille = 22, couleur }: { nom: NomIcone; taille?: n
         <>
           <Path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" stroke={couleur} strokeWidth={2.4} fill="none" />
           <Rect x={5} y={10.5} width={14} height={10} rx={2} fill={couleur} />
+        </>
+      )}
+      {nom === 'reglages' && (
+        <>
+          <Path d="M4 7h16M4 17h16" stroke={couleur} strokeWidth={2.2} strokeLinecap="round" />
+          <Circle cx={9} cy={7} r={2.6} fill={couleur} />
+          <Circle cx={15} cy={17} r={2.6} fill={couleur} />
         </>
       )}
       {nom === 'etoile' && (

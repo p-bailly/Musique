@@ -1,12 +1,13 @@
 /**
  * Portée musicale (clé de sol ou clé de fa) dessinée en SVG.
- * Affiche la note à jouer (en couleur) et les suivantes, avec la bonne
- * figure de note selon la durée (ronde, blanche, noire, croche).
+ * Affiche la note à jouer (encadrée) et les suivantes, chacune à la couleur
+ * de sa note, avec la bonne figure selon la durée (ronde, blanche, noire, croche).
  */
 import React from 'react';
 import Svg, { Circle, Ellipse, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { Cle, estAlteree, nomNote, positionPortee } from '@/music/notes';
 import { useCouleurs } from '@/store/Reglages';
+import { couleurNote } from '@/theme/couleurs';
 
 export interface NotePortee {
   midi: number;
@@ -38,8 +39,6 @@ export function Portee({ cle, notes, largeur, hauteur, afficherNoms }: Props) {
   const espacement = 3.4 * g;
   const nbVisibles = Math.max(1, Math.floor((largeur - xDebut - g) / espacement));
 
-  const couleurStatut = (s: NotePortee['statut']) =>
-    s === 'actuelle' ? c.primaire : s === 'passee' ? c.succes : s === 'erreur' ? c.erreur : c.encre;
 
   return (
     <Svg width={largeur} height={hauteur}>
@@ -56,28 +55,37 @@ export function Portee({ cle, notes, largeur, hauteur, afficherNoms }: Props) {
       {notes.slice(0, nbVisibles).map((n, i) => {
         const p = positionPortee(n.midi, cle);
         const x = xDebut + g + i * espacement;
-        const couleur = couleurStatut(n.statut);
+        const couleur = couleurNote(n.midi).fond;
         return (
-          <G key={i} opacity={n.statut === 'futur' ? 0.75 : 1}>
-            {n.statut === 'actuelle' && (
+          <G key={i} opacity={n.statut === 'passee' ? 0.35 : 1}>
+            {(n.statut === 'actuelle' || n.statut === 'erreur') && (
               <Rect
                 x={x - g * 1.5}
                 y={y(POS_MAX) - g * 0.2}
                 width={g * 3}
                 height={y(POS_MIN) - y(POS_MAX) + g * 0.4}
                 rx={g * 0.6}
-                fill={c.primaire}
-                opacity={0.12}
+                fill={n.statut === 'erreur' ? c.erreur : c.encre}
+                opacity={n.statut === 'erreur' ? 0.18 : 0.08}
               />
             )}
-            <FigureNote x={x} p={p} y={y} g={g} duree={n.duree} couleur={couleur} alteree={estAlteree(n.midi)} />
+            <FigureNote
+              x={x}
+              p={p}
+              y={y}
+              g={g}
+              duree={n.duree}
+              couleur={couleur}
+              encre={c.encre}
+              alteree={estAlteree(n.midi)}
+            />
             {afficherNoms && (
               <SvgText
                 x={x}
                 y={hauteur - 3}
                 fontSize={12}
-                fontWeight="bold"
-                fill={couleur}
+                fontFamily="Nunito_900Black"
+                fill={c.encre}
                 textAnchor="middle"
               >
                 {nomNote(n.midi)}
@@ -96,12 +104,15 @@ interface FigureProps {
   y: (p: number) => number;
   g: number;
   duree: number;
+  /** Couleur de la note (tête) */
   couleur: string;
+  /** Couleur du trait (hampe, contour, lignes supplémentaires) */
+  encre: string;
   alteree: boolean;
 }
 
 /** Tête de note + hampe + crochet + lignes supplémentaires. */
-function FigureNote({ x, p, y, g, duree, couleur, alteree }: FigureProps) {
+function FigureNote({ x, p, y, g, duree, couleur, encre, alteree }: FigureProps) {
   const yn = y(p);
   const rx = g * 0.62;
   const ry = g * 0.44;
@@ -121,12 +132,25 @@ function FigureNote({ x, p, y, g, duree, couleur, alteree }: FigureProps) {
   return (
     <G>
       {supp.map((q) => (
-        <Line key={q} x1={x - rx * 1.6} x2={x + rx * 1.6} y1={y(q)} y2={y(q)} stroke={couleur} strokeWidth={1.2} />
+        <Line key={q} x1={x - rx * 1.6} x2={x + rx * 1.6} y1={y(q)} y2={y(q)} stroke={encre} strokeWidth={1.2} />
       ))}
       {alteree && (
-        <SvgText x={x - rx * 2.4} y={yn + g * 0.45} fontSize={g * 1.6} fill={couleur} textAnchor="middle">
+        <SvgText x={x - rx * 2.4} y={yn + g * 0.45} fontSize={g * 1.6} fill={encre} textAnchor="middle">
           ♯
         </SvgText>
+      )}
+      {/* Tête creuse (ronde, blanche) : anneau coloré bordé d'encre, pour rester lisible même en jaune */}
+      {!pleine && (
+        <Ellipse
+          cx={x}
+          cy={yn}
+          rx={rx}
+          ry={ry}
+          transform={`rotate(-20 ${x} ${yn})`}
+          fill="none"
+          stroke={encre}
+          strokeWidth={g * 0.36}
+        />
       )}
       <Ellipse
         cx={x}
@@ -135,10 +159,10 @@ function FigureNote({ x, p, y, g, duree, couleur, alteree }: FigureProps) {
         ry={ry}
         transform={`rotate(-20 ${x} ${yn})`}
         fill={pleine ? couleur : 'none'}
-        stroke={couleur}
-        strokeWidth={pleine ? 1 : g * 0.22}
+        stroke={pleine ? encre : couleur}
+        strokeWidth={pleine ? 1.2 : g * 0.2}
       />
-      {hampe && <Line x1={xh} x2={xh} y1={yn} y2={yFinHampe} stroke={couleur} strokeWidth={1.4} />}
+      {hampe && <Line x1={xh} x2={xh} y1={yn} y2={yFinHampe} stroke={encre} strokeWidth={1.4} />}
       {/* Crochet(s) pour croche et double croche */}
       {duree <= 0.5 &&
         [0, ...(duree <= 0.25 ? [1] : [])].map((k) => {
@@ -148,13 +172,13 @@ function FigureNote({ x, p, y, g, duree, couleur, alteree }: FigureProps) {
             <Path
               key={k}
               d={`M ${xh} ${y0} q ${g * 0.2} ${s * g * 1.1} ${g * 1.1} ${s * g * 1.6} q ${g * 0.3} ${s * g * 0.5} ${g * 0.1} ${s * g * 1.2}`}
-              stroke={couleur}
+              stroke={encre}
               strokeWidth={1.5}
               fill="none"
             />
           );
         })}
-      {pointee && <Circle cx={x + rx + g * 0.45} cy={p % 2 === 0 ? yn - g * 0.5 : yn} r={g * 0.16} fill={couleur} />}
+      {pointee && <Circle cx={x + rx + g * 0.45} cy={p % 2 === 0 ? yn - g * 0.5 : yn} r={g * 0.16} fill={encre} />}
     </G>
   );
 }

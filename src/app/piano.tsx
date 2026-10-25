@@ -3,7 +3,8 @@
  * montre le nom de la note et sa place sur la portée. Idéal pour explorer.
  */
 import React, { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { Text } from '@/components/Texte';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { jouerNote, prechargerSons } from '@/audio/piano';
 import { BoutonMicro } from '@/components/BoutonMicro';
@@ -13,6 +14,7 @@ import { NotePortee, Portee } from '@/components/Portee';
 import { useMicro } from '@/hooks/useMicro';
 import { Cle, DO_CENTRAL, nomNote } from '@/music/notes';
 import { useReglages } from '@/store/Reglages';
+import { couleurNote } from '@/theme/couleurs';
 import { revenir } from '@/utils/navigation';
 
 /** Octaves proposées : du Do2 au Do4, deux octaves affichées. */
@@ -106,9 +108,19 @@ export default function PianoLibre() {
           </View>
         </View>
 
-        <View style={[styles.grandeNote, { backgroundColor: c.surface, borderColor: c.bordure }]}>
-          <Text style={[styles.nom, { color: c.primaire }]}>{derniere !== undefined ? nomNote(derniere) : '?'}</Text>
-          <Text style={{ color: c.texteDiscret }}>{derniere !== undefined ? (cle === 'sol' ? 'clé de sol' : 'clé de fa') : surPiano ? 'Joue une note sur ton piano' : 'Joue une note'}</Text>
+        {/* La carte prend la couleur de la note jouée */}
+        <View
+          style={[
+            styles.grandeNote,
+            derniere !== undefined
+              ? { backgroundColor: couleurNote(derniere).fond, borderColor: couleurNote(derniere).fond }
+              : { backgroundColor: c.surface, borderColor: c.bordure },
+          ]}
+        >
+          <Text style={[styles.nom, { color: derniere !== undefined ? couleurNote(derniere).texte : c.texteDiscret }]}>
+            {derniere !== undefined ? nomNote(derniere) : '?'}
+          </Text>
+          <Text style={{ color: derniere !== undefined ? couleurNote(derniere).texte : c.texteDiscret, fontWeight: '700', textAlign: 'center', paddingHorizontal: 8 }}>{derniere !== undefined ? (cle === 'sol' ? 'clé de sol' : 'clé de fa') : surPiano ? 'Joue une note sur ton piano' : 'Joue une note'}</Text>
         </View>
 
         <View style={[styles.portee, { backgroundColor: c.surface, borderColor: c.bordure }]}>
@@ -137,7 +149,7 @@ const styles = StyleSheet.create({
   rond: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   octaves: { flexDirection: 'row', gap: 4, flexWrap: 'wrap' },
   octave: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 10 },
-  grandeNote: { width: 170, alignSelf: 'stretch', marginVertical: 8, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  grandeNote: { width: 170, alignSelf: 'stretch', marginVertical: 8, borderRadius: 20, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   nom: { fontSize: 56, fontWeight: '900' },
-  portee: { flex: 1, alignSelf: 'stretch', marginVertical: 8, borderRadius: 16, borderWidth: 1, overflow: 'hidden', justifyContent: 'center' },
+  portee: { flex: 1, alignSelf: 'stretch', marginVertical: 8, borderRadius: 20, borderWidth: 2, overflow: 'hidden', justifyContent: 'center' },
 });

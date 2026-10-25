@@ -1,12 +1,15 @@
 /**
- * Clavier de piano virtuel, avec le nom français de chaque touche.
- * La touche à jouer est mise en surbrillance ; un appui juste ou faux
+ * Clavier de piano virtuel, avec le nom français de chaque touche et sa
+ * couleur (bande en bas des touches blanches). La touche à jouer s'allume
+ * entièrement à la couleur de sa note ; un appui juste ou faux
  * colore brièvement la touche en vert ou en rouge.
  */
 import React, { memo, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/Texte';
 import { DO_CENTRAL, estToucheNoire, nomNote } from '@/music/notes';
 import { useCouleurs } from '@/store/Reglages';
+import { couleurNote } from '@/theme/couleurs';
 import { geometrieClavier } from './geometrieClavier';
 
 interface Props {
@@ -53,10 +56,17 @@ function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour
     });
   };
 
+  /** Texte posé sur la touche : lisible sur la couleur de la note quand elle est allumée. */
+  const couleurNom = (midi: number, noire: boolean) => {
+    if (flash && flash.midi === midi) return '#FFFFFF';
+    if (surbrillance === midi) return couleurNote(midi).texte;
+    return noire ? c.texteToucheNoire : c.texteToucheBlanche;
+  };
+
   const couleurTouche = (midi: number, noire: boolean) => {
     if (flash && flash.midi === midi) return flash.type === 'ok' ? c.succes : c.erreur;
-    if (surbrillance === midi) return c.surbrillance;
-    if (enfoncees.has(midi)) return noire ? '#4a4f5e' : '#d9deea';
+    if (surbrillance === midi) return couleurNote(midi).fond;
+    if (enfoncees.has(midi)) return noire ? '#4A463D' : c.surfaceAlt;
     return noire ? c.toucheNoire : c.toucheBlanche;
   };
 
@@ -88,10 +98,12 @@ function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour
             ]}
           >
             {afficherNoms && (
-              <Text style={[styles.nom, { color: c.texteToucheBlanche, fontSize: tailleTexte }]}>{nomNote(m)}</Text>
+              <Text style={[styles.nom, { color: couleurNom(m, false), fontSize: tailleTexte }]}>{nomNote(m)}</Text>
             )}
+            {/* Bande à la couleur de la note */}
+            <View style={[styles.bandeNote, { backgroundColor: couleurNote(m).fond }]} />
             {/* Repère du do central */}
-            {m === DO_CENTRAL && <View style={[styles.repere, { backgroundColor: c.primaire }]} />}
+            {m === DO_CENTRAL && <View style={[styles.repere, { backgroundColor: c.toucheNoire }]} />}
           </Pressable>
         );
       })}
@@ -111,7 +123,7 @@ function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour
           >
             {afficherNoms && (
               <Text
-                style={[styles.nomNoire, { color: c.texteToucheNoire, fontSize: tailleTexte * 0.62 }]}
+                style={[styles.nomNoire, { color: couleurNom(m, true), fontSize: tailleTexte * 0.62 }]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
               >
@@ -137,7 +149,8 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 6,
     alignItems: 'center',
     justifyContent: 'flex-end',
-    paddingBottom: 8,
+    paddingBottom: 14,
+    overflow: 'hidden',
   },
   noire: {
     position: 'absolute',
@@ -153,5 +166,6 @@ const styles = StyleSheet.create({
   },
   nom: { fontWeight: '700' },
   nomNoire: { fontWeight: '600' },
-  repere: { position: 'absolute', bottom: 2, width: 6, height: 6, borderRadius: 3 },
+  bandeNote: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 6 },
+  repere: { position: 'absolute', bottom: 9, width: 6, height: 6, borderRadius: 3 },
 });
