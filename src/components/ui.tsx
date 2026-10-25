@@ -39,7 +39,15 @@ export function Bouton({ titre, onPress, variante = 'primaire', petit, desactive
         style,
       ]}
     >
-      <Text style={[styles.texteBouton, petit && styles.texteBoutonPetit, { color: texte }]}>{titre}</Text>
+      {/* Toujours sur une ligne : le texte rétrécit plutôt que de passer à la ligne */}
+      <Text
+        style={[styles.texteBouton, petit && styles.texteBoutonPetit, { color: texte }]}
+        numberOfLines={1}
+        adjustsFontSizeToFit
+        minimumFontScale={0.6}
+      >
+        {titre}
+      </Text>
     </Pressable>
   );
 }
