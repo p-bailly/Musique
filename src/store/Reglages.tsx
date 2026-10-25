@@ -29,6 +29,10 @@ export interface Reglages {
   metronome: boolean;
   /** Clics pendant la mesure de décompte, avant la première note. */
   decompteAudible: boolean;
+  /** Sensibilité du micro : 0.6 (pièce bruyante) à 2 (piano lointain ou doux). */
+  sensibiliteMicro: number;
+  /** Bruit de fond mesuré à la calibration (RMS), 0 tant qu'il n'a pas été mesuré. */
+  bruitMicro: number;
 }
 
 export const REGLAGES_DEFAUT: Reglages = {
@@ -41,6 +45,8 @@ export const REGLAGES_DEFAUT: Reglages = {
   toutDebloquer: false,
   metronome: false,
   decompteAudible: true,
+  sensibiliteMicro: 1,
+  bruitMicro: 0,
 };
 
 const CLE = 'reglages-v1';

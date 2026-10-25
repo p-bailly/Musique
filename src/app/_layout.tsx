@@ -38,6 +38,7 @@ function Navigation() {
         <Stack.Screen name="index" options={{ title: 'Solfège Piano', headerShown: false }} />
         <Stack.Screen name="stats" options={{ title: 'Ma progression' }} />
         <Stack.Screen name="reglages" options={{ title: 'Réglages' }} />
+        <Stack.Screen name="calibration" options={{ title: 'Calibrer le micro' }} />
         {/* Écrans de jeu : plein écran, en paysage */}
         <Stack.Screen name="lecon/[id]" options={{ headerShown: false, orientation: 'landscape' }} />
         <Stack.Screen name="piano" options={{ headerShown: false, orientation: 'landscape' }} />

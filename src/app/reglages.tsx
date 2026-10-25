@@ -2,6 +2,7 @@
  * Réglages : vitesse des notes, mode attente, noms des notes, son,
  * thème clair/sombre, déblocage des leçons, remise à zéro.
  */
+import { router } from 'expo-router';
 import React from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { Text } from '@/components/Texte';
@@ -131,9 +132,12 @@ export default function EcranReglages() {
       <Carte style={styles.bloc}>
         <Text style={[styles.titre, { color: c.texte }]}>Jouer sur un vrai piano</Text>
         <Text style={{ color: c.texteDiscret, fontSize: 15, lineHeight: 21 }}>
-          Pose le téléphone sur le pupitre de ton piano : le micro s’allume tout seul (le bouton « Micro » permet de le couper). Joue une note à la fois, dans
-          une pièce calme. L’octave n’est pas vérifiée au micro (seul le nom de la note compte).
+          Pose le téléphone sur le pupitre de ton piano : le micro s’allume tout seul (le bouton « Micro » permet de le
+          couper). Il reconnaît les accords et les deux mains ensemble. L’octave n’est pas vérifiée au micro (seul le nom
+          de la note compte), et une note qui sonne comme l’harmonique d’une autre note de l’accord (son octave, par
+          exemple) est validée avec elle.
         </Text>
+        <Bouton titre="Calibrer le micro" variante="secondaire" onPress={() => router.push('/calibration')} />
       </Carte>
 
       <Bouton titre="Effacer ma progression" variante="danger" onPress={confirmerRemiseAZero} />

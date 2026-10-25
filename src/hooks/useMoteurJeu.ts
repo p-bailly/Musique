@@ -44,6 +44,8 @@ export interface Bilan {
 const TOLERANCE_S = 0.3;
 /** En mode attente, on peut jouer la note un peu avant qu'elle n'arrive (en temps). */
 const AVANCE_ACCEPTEE = 1.5;
+/** Écarts (en demi-tons) des harmoniques 2 à 6 d'une note : octave, douzième, double octave… */
+const HARMONIQUES = [12, 19, 24, 28, 31];
 /** Au micro, une même fausse note n'est comptée qu'une fois pendant ce délai (résonance). */
 const ANTI_REBOND_MICRO_MS = 700;
 
@@ -241,8 +243,21 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin, onBattement }
       const trouvee = candidates.find(correspond);
 
       if (trouvee) {
-        s.etats[trouvee.index] = 'reussie';
-        s.reussies++;
+        const valides = [trouvee];
+        if (source === 'micro') {
+          const groupe = groupes[trouvee.groupe].indices.map((i) => lecon.notes[i]);
+          const restantes = () => groupe.filter((n) => s.etats[n.index] === 'attente' && !valides.includes(n));
+          // Au micro, un même nom couvre toutes ses octaves (Do3 + Do4 s'entendent comme un seul Do)
+          valides.push(...restantes().filter((n) => n.midi % 12 === midi % 12));
+          // Une note qui tombe sur une harmonique d'une note jouée du même accord (octave, douzième…)
+          // ne peut pas être distinguée au micro : elle est validée avec elle
+          const jouees = () => groupe.filter((n) => s.etats[n.index] === 'reussie' || valides.includes(n));
+          valides.push(...restantes().filter((n) => jouees().some((j) => HARMONIQUES.includes(n.midi - j.midi))));
+        }
+        for (const n of valides) {
+          s.etats[n.index] = 'reussie';
+          s.reussies++;
+        }
         setEtats([...s.etats]);
         avancer();
         signaler('ok', trouvee.midi, 'Bravo !');
