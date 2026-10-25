@@ -3,16 +3,20 @@
  * pratique et graphique des 7 derniers jours.
  */
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@/components/Texte';
 import { Carte, Etoiles } from '@/components/ui';
 import { NIVEAUX, TOUTES_LES_LECONS } from '@/data/lecons';
 import { jourLocal, useProgression } from '@/store/Progression';
-import { useCouleurs } from '@/store/Reglages';
+import { useReglages } from '@/store/Reglages';
+import { ARC_EN_CIEL } from '@/theme/couleurs';
 
 const JOURS_SEMAINE = ['dim', 'lun', 'mar', 'mer', 'jeu', 'ven', 'sam'];
 
 export default function Statistiques() {
-  const c = useCouleurs();
+  const { couleurs: c, sombre } = useReglages();
+  // Tuiles teintées (orange, bleu, vert), plus sombres en thème sombre
+  const teintes = sombre ? ['#3A2A14', '#16263C', '#16301F'] : ['#FFF1D6', '#E6F0FC', '#E3F3E8'];
   const { progression: p, serieActuelle } = useProgression();
 
   const totalEtoiles = TOUTES_LES_LECONS.reduce((s, l) => s + (p.lecons[l.id]?.meilleuresEtoiles ?? 0), 0);
@@ -42,11 +46,11 @@ export default function Statistiques() {
   return (
     <ScrollView contentContainerStyle={styles.contenu}>
       <View style={styles.tuiles}>
-        {tuiles.map((t) => (
-          <Carte key={t.legende} style={styles.tuile}>
+        {tuiles.map((t, i) => (
+          <View key={t.legende} style={[styles.tuile, { backgroundColor: teintes[i % 3] }]}>
             <Text style={[styles.valeur, { color: c.texte }]}>{t.valeur}</Text>
-            <Text style={{ color: c.texteDiscret, fontSize: 14 }}>{t.legende}</Text>
-          </Carte>
+            <Text style={{ color: c.texteDiscret, fontSize: 14, fontWeight: '700' }}>{t.legende}</Text>
+          </View>
         ))}
       </View>
 
@@ -59,7 +63,7 @@ export default function Statistiques() {
               <View
                 style={[
                   styles.barre,
-                  { height: Math.max(3, (j.minutes / maxMinutes) * 110), backgroundColor: i === 6 ? c.primaire : c.blocDroite },
+                  { height: Math.max(3, (j.minutes / maxMinutes) * 110), backgroundColor: ARC_EN_CIEL[i], opacity: i === 6 ? 1 : 0.75 },
                 ]}
               />
               <Text style={{ color: c.texte, fontSize: 13, fontWeight: '700' }}>{j.libelle}</Text>
@@ -94,12 +98,12 @@ export default function Statistiques() {
 const styles = StyleSheet.create({
   contenu: { padding: 16, gap: 14, paddingBottom: 40 },
   tuiles: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  tuile: { flexGrow: 1, flexBasis: 140, alignItems: 'center', paddingVertical: 14 },
-  valeur: { fontSize: 24, fontWeight: '900' },
+  tuile: { flexGrow: 1, flexBasis: 140, padding: 14, borderRadius: 20 },
+  valeur: { fontSize: 28, fontWeight: '900' },
   bloc: { gap: 8 },
   titre: { fontSize: 18, fontWeight: '800' },
   graphe: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 150, paddingTop: 8 },
   colonne: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', gap: 4 },
-  barre: { width: 22, borderRadius: 6 },
+  barre: { width: 22, borderRadius: 8 },
   ligneLecon: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth },
 });

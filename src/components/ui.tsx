@@ -1,11 +1,14 @@
 /**
  * Petits composants d'interface réutilisables : grands boutons, étoiles,
- * cartes, interrupteurs… Tous respectent le thème clair/sombre.
+ * cartes, pastilles de notes… Tous respectent le thème clair/sombre.
  */
 import React from 'react';
-import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { Text } from '@/components/Texte';
 import { Icone } from '@/components/Icones';
+import { nomNote } from '@/music/notes';
 import { useCouleurs } from '@/store/Reglages';
+import { couleurNote } from '@/theme/couleurs';
 
 interface BoutonProps {
   titre: string;
@@ -20,8 +23,8 @@ interface BoutonProps {
 /** Grand bouton arrondi, facile à toucher. */
 export function Bouton({ titre, onPress, variante = 'primaire', petit, desactive, style, accessibilityLabel }: BoutonProps) {
   const c = useCouleurs();
-  const fond = variante === 'primaire' ? c.primaire : variante === 'danger' ? c.erreur : c.surfaceAlt;
-  const texte = variante === 'secondaire' ? c.texte : c.surPrimaire;
+  const fond = variante === 'primaire' ? c.primaire : variante === 'danger' ? c.erreur : c.surface;
+  const texte = variante === 'secondaire' ? c.texte : variante === 'danger' ? '#FFFFFF' : c.surPrimaire;
   return (
     <Pressable
       onPress={onPress}
@@ -32,6 +35,7 @@ export function Bouton({ titre, onPress, variante = 'primaire', petit, desactive
         styles.bouton,
         petit && styles.boutonPetit,
         { backgroundColor: fond, opacity: desactive ? 0.4 : pressed ? 0.75 : 1 },
+        variante === 'secondaire' && { borderWidth: 2, borderColor: c.bordure },
         style,
       ]}
     >
@@ -48,6 +52,17 @@ export function Etoiles({ nombre, taille = 18 }: { nombre: number; taille?: numb
       {[1, 2, 3].map((i) => (
         <Icone key={i} nom="etoile" taille={taille} couleur={i <= nombre ? c.etoile : c.bordure} />
       ))}
+    </View>
+  );
+}
+
+/** Pastille d'une note, à sa couleur (Do rouge, Ré orange…) ; grisée si `eteinte`. */
+export function PastilleNote({ midi, eteinte }: { midi: number; eteinte?: boolean }) {
+  const c = useCouleurs();
+  const n = couleurNote(midi);
+  return (
+    <View style={[styles.pastilleNote, { backgroundColor: eteinte ? c.surfaceAlt : n.fond }]}>
+      <Text style={[styles.texteNote, { color: eteinte ? c.texteDiscret : n.texte }]}>{nomNote(midi)}</Text>
     </View>
   );
 }
@@ -81,7 +96,7 @@ export function Choix<T extends string | number>({
             accessibilityState={{ selected: actif }}
             style={[
               styles.pastille,
-              { backgroundColor: actif ? c.primaire : c.surfaceAlt, borderColor: actif ? c.primaire : c.bordure },
+              { backgroundColor: actif ? c.primaire : c.surface, borderColor: actif ? c.primaire : c.bordure },
             ]}
           >
             <Text style={{ color: actif ? c.surPrimaire : c.texte, fontWeight: '700', fontSize: 16 }}>{o.libelle}</Text>
@@ -96,15 +111,17 @@ const styles = StyleSheet.create({
   bouton: {
     minHeight: 56,
     paddingHorizontal: 24,
-    borderRadius: 16,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  boutonPetit: { minHeight: 44, paddingHorizontal: 14, borderRadius: 12 },
-  texteBouton: { fontSize: 19, fontWeight: '800' },
+  boutonPetit: { minHeight: 44, paddingHorizontal: 14, borderRadius: 14 },
+  texteBouton: { fontSize: 18, fontWeight: '800' },
   texteBoutonPetit: { fontSize: 16 },
-  etoiles: { flexDirection: 'row' },
-  carte: { borderRadius: 18, borderWidth: 1, padding: 16 },
+  etoiles: { flexDirection: 'row', gap: 2 },
+  carte: { borderRadius: 20, borderWidth: 2, padding: 16 },
   choix: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  pastille: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999, borderWidth: 1, minWidth: 56, alignItems: 'center' },
+  pastille: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999, borderWidth: 2, minWidth: 56, alignItems: 'center' },
+  pastilleNote: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 },
+  texteNote: { fontSize: 13, fontWeight: '800' },
 });

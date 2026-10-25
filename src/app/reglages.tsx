@@ -3,7 +3,8 @@
  * thème clair/sombre, déblocage des leçons, remise à zéro.
  */
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Text } from '@/components/Texte';
 import { Bouton, Carte, Choix } from '@/components/ui';
 import { useProgression } from '@/store/Progression';
 import { ChoixTheme, Entree, useCouleurs, useReglages } from '@/store/Reglages';

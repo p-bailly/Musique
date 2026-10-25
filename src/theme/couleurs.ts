@@ -20,8 +20,6 @@ export interface Palette {
   texteToucheNoire: string;
   surbrillance: string;
   /** Blocs qui tombent */
-  blocDroite: string;
-  blocGauche: string;
   ligneImpact: string;
   /** Portée */
   encre: string;
@@ -29,49 +27,70 @@ export interface Palette {
 }
 
 export const clair: Palette = {
-  fond: '#F4F6FB',
+  fond: '#FFFDF8',
   surface: '#FFFFFF',
-  surfaceAlt: '#E9EDF7',
-  texte: '#1B2133',
-  texteDiscret: '#5D6680',
-  bordure: '#D5DBEA',
-  primaire: '#4C5FD5',
+  surfaceAlt: '#F3EEE2',
+  texte: '#1D1B16',
+  texteDiscret: '#5E584C',
+  bordure: '#E8E2D4',
+  primaire: '#1D1B16',
   surPrimaire: '#FFFFFF',
-  succes: '#2EAD5B',
-  erreur: '#E0464E',
-  etoile: '#F5B400',
+  succes: '#2E8A4A',
+  erreur: '#C8323A',
+  etoile: '#F2B21B',
   toucheBlanche: '#FFFFFF',
-  toucheNoire: '#23262F',
-  texteToucheBlanche: '#3A4158',
-  texteToucheNoire: '#E6E8F0',
-  surbrillance: '#FFD54A',
-  blocDroite: '#5B8DEF',
-  blocGauche: '#B36BDB',
-  ligneImpact: '#4C5FD5',
-  encre: '#1B2133',
-  zoneJeu: '#E9EDF7',
+  toucheNoire: '#1D1B16',
+  texteToucheBlanche: '#3B372E',
+  texteToucheNoire: '#EDE8DC',
+  surbrillance: '#1D1B16',
+  ligneImpact: '#1D1B16',
+  encre: '#1D1B16',
+  zoneJeu: '#F6F1E6',
 };
 
 export const sombre: Palette = {
-  fond: '#10131C',
-  surface: '#1A1F2D',
-  surfaceAlt: '#242A3B',
-  texte: '#ECEFF7',
-  texteDiscret: '#9AA3BC',
-  bordure: '#323a50',
-  primaire: '#7B8CFF',
-  surPrimaire: '#10131C',
-  succes: '#47C977',
-  erreur: '#FF6B72',
-  etoile: '#FFC93C',
-  toucheBlanche: '#F2F3F7',
-  toucheNoire: '#0B0D12',
-  texteToucheBlanche: '#3A4158',
-  texteToucheNoire: '#C9CDDA',
-  surbrillance: '#FFC93C',
-  blocDroite: '#5B8DEF',
-  blocGauche: '#C080E8',
-  ligneImpact: '#7B8CFF',
-  encre: '#ECEFF7',
-  zoneJeu: '#151927',
+  fond: '#15130F',
+  surface: '#201D17',
+  surfaceAlt: '#2B2720',
+  texte: '#F6F1E6',
+  texteDiscret: '#B3AB9A',
+  bordure: '#3A352C',
+  primaire: '#F6F1E6',
+  surPrimaire: '#15130F',
+  succes: '#4CB36C',
+  erreur: '#E5585E',
+  etoile: '#F5BE33',
+  toucheBlanche: '#F6F1E6',
+  toucheNoire: '#0E0C09',
+  texteToucheBlanche: '#3B372E',
+  texteToucheNoire: '#D9D2C2',
+  surbrillance: '#F6F1E6',
+  ligneImpact: '#F6F1E6',
+  encre: '#F6F1E6',
+  zoneJeu: '#1B1814',
 };
+
+/**
+ * Chaque note a sa couleur (Do rouge, Ré orange, Mi jaune, Fa vert, Sol bleu,
+ * La violet, Si rose), la même partout : portée, blocs qui tombent, clavier,
+ * pastilles des leçons. Les dièses prennent la couleur de la note de base.
+ */
+const COULEURS_NOTES: { fond: string; texte: string }[] = [
+  { fond: '#C8323A', texte: '#FFFFFF' }, // Do
+  { fond: '#F08C2E', texte: '#1D1B16' }, // Ré
+  { fond: '#F2C230', texte: '#1D1B16' }, // Mi
+  { fond: '#2E8A4A', texte: '#FFFFFF' }, // Fa
+  { fond: '#2468C8', texte: '#FFFFFF' }, // Sol
+  { fond: '#5B44B8', texte: '#FFFFFF' }, // La
+  { fond: '#B8337F', texte: '#FFFFFF' }, // Si
+];
+
+const DEGRE_PAR_DEMITON = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
+
+/** Couleur d'une note MIDI (fond) et couleur lisible du texte posé dessus. */
+export function couleurNote(midi: number): { fond: string; texte: string } {
+  return COULEURS_NOTES[DEGRE_PAR_DEMITON[((midi % 12) + 12) % 12]];
+}
+
+/** Les 7 couleurs dans l'ordre Do → Si (bandeau décoratif). */
+export const ARC_EN_CIEL = COULEURS_NOTES.map((n) => n.fond);

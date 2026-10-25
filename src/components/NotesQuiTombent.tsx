@@ -1,13 +1,16 @@
 /**
  * Zone où les blocs de notes descendent vers le clavier.
- * Chaque bloc est aligné sur sa touche ; sa hauteur représente la durée.
+ * Chaque bloc est aligné sur sa touche, à la couleur de sa note ; sa hauteur
+ * représente la durée.
  */
 import React, { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/components/Texte';
 import { NoteMorceau } from '@/data/lecons';
 import { EtatNote } from '@/hooks/useMoteurJeu';
 import { estToucheNoire, nomNote } from '@/music/notes';
 import { useCouleurs } from '@/store/Reglages';
+import { couleurNote } from '@/theme/couleurs';
 import { geometrieClavier } from './geometrieClavier';
 
 interface Props {
@@ -64,9 +67,10 @@ export function NotesQuiTombent({
 
         const etat = etats[i];
         const estProchaine = i === prochaine;
-        let fond = n.main === 'gauche' ? c.blocGauche : c.blocDroite;
-        if (etat === 'reussie') fond = c.succes;
-        if (etat === 'manquee') fond = c.erreur;
+        // Une note manquée devient grise (le rouge est déjà la couleur du Do)
+        const couleur = couleurNote(n.midi);
+        const fond = etat === 'manquee' ? c.texteDiscret : couleur.fond;
+        const texte = etat === 'manquee' ? c.fond : couleur.texte;
         const marge = t.noire ? 1 : 3;
         return (
           <View
@@ -85,7 +89,7 @@ export function NotesQuiTombent({
             ]}
           >
             {afficherNoms && (
-              <Text style={[styles.nom, { fontSize: estToucheNoire(n.midi) ? 9 : 12 }]} numberOfLines={1}>
+              <Text style={[styles.nom, { color: texte, fontSize: estToucheNoire(n.midi) ? 9 : 12 }]} numberOfLines={1}>
                 {nomNote(n.midi)}
               </Text>
             )}
@@ -110,6 +114,6 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     paddingBottom: 2,
   },
-  nom: { color: '#fff', fontWeight: '800' },
+  nom: { fontWeight: '800' },
   ligne: { position: 'absolute', left: 0, right: 0, bottom: 0, height: 3 },
 });

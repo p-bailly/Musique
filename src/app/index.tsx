@@ -4,16 +4,28 @@
  */
 import { router } from 'expo-router';
 import React from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icone } from '@/components/Icones';
-import { Bouton, Carte, Etoiles } from '@/components/ui';
+import { Text } from '@/components/Texte';
+import { Bouton, Etoiles, PastilleNote } from '@/components/ui';
 import { NIVEAUX, Lecon, TOUTES_LES_LECONS } from '@/data/lecons';
+import { nomNote } from '@/music/notes';
 import { useProgression } from '@/store/Progression';
 import { useReglages } from '@/store/Reglages';
+import { ARC_EN_CIEL } from '@/theme/couleurs';
+
+/** Notes distinctes d'une leçon (une par nom, de la plus grave à la plus aiguë). */
+function notesDeLaLecon(lecon: Lecon): number[] {
+  const parNom = new Map<string, number>();
+  for (const n of [...lecon.notes].sort((a, b) => a.midi - b.midi)) {
+    if (!parNom.has(nomNote(n.midi))) parNom.set(nomNote(n.midi), n.midi);
+  }
+  return [...parNom.values()];
+}
 
 export default function Accueil() {
-  const { couleurs: c, reglages } = useReglages();
+  const { couleurs: c, reglages, sombre } = useReglages();
   const { progression, serieActuelle } = useProgression();
 
   const etoiles = (id: string) => progression.lecons[id]?.meilleuresEtoiles ?? 0;
@@ -26,29 +38,52 @@ export default function Accueil() {
   };
 
   const totalEtoiles = TOUTES_LES_LECONS.reduce((s, l) => s + etoiles(l.id), 0);
+  const leconsReussies = TOUTES_LES_LECONS.filter((l) => etoiles(l.id) > 0).length;
+  // La prochaine leçon à jouer : la première ouverte sans étoile
+  const aJouer = TOUTES_LES_LECONS.find((l) => estDebloquee(l) && etoiles(l.id) === 0)?.id;
+
+  // Tuiles teintées (orange, bleu, vert), plus sombres en thème sombre
+  const teintes = sombre ? ['#3A2A14', '#16263C', '#16301F'] : ['#FFF1D6', '#E6F0FC', '#E3F3E8'];
+  const tuiles = [
+    { valeur: serieActuelle, legende: `jour${serieActuelle > 1 ? 's' : ''} d’affilée` },
+    { valeur: totalEtoiles, legende: 'étoiles' },
+    { valeur: leconsReussies, legende: `leçon${leconsReussies > 1 ? 's' : ''}` },
+  ];
 
   return (
     <SafeAreaView style={[styles.ecran, { backgroundColor: c.fond }]} edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={styles.contenu}>
-        <View style={styles.entete}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.titre, { color: c.texte }]}>Solfège Piano</Text>
-            <Text style={[styles.sousTitre, { color: c.texteDiscret }]}>Apprends à lire et jouer les notes</Text>
-          </View>
-          <View style={[styles.badge, { backgroundColor: c.surface, borderColor: c.bordure }]}>
-            <Text style={[styles.badgeTexte, { color: c.texte }]}>{serieActuelle}</Text>
-            <Text style={[styles.badgeLegende, { color: c.texteDiscret }]}>jour{serieActuelle > 1 ? 's' : ''}</Text>
-          </View>
-          <View style={[styles.badge, { backgroundColor: c.surface, borderColor: c.bordure }]}>
-            <Text style={[styles.badgeTexte, { color: c.texte }]}>{totalEtoiles}</Text>
-            <Text style={[styles.badgeLegende, { color: c.texteDiscret }]}>étoiles</Text>
-          </View>
+        <View style={styles.arcEnCiel}>
+          {ARC_EN_CIEL.map((couleur) => (
+            <View key={couleur} style={[styles.bande, { backgroundColor: couleur }]} />
+          ))}
+        </View>
+        <Text style={[styles.titre, { color: c.texte }]}>Solfège Piano</Text>
+        <Text style={[styles.sousTitre, { color: c.texteDiscret }]}>Apprends à lire et jouer les notes</Text>
+
+        <View style={styles.tuiles}>
+          {tuiles.map((t, i) => (
+            <View key={t.legende} style={[styles.tuile, { backgroundColor: teintes[i] }]}>
+              <Text style={[styles.tuileValeur, { color: c.texte }]}>{t.valeur}</Text>
+              <Text style={[styles.tuileLegende, { color: c.texteDiscret }]}>{t.legende}</Text>
+            </View>
+          ))}
         </View>
 
         <View style={styles.actions}>
-          <Bouton titre="Piano libre" onPress={() => router.push('/piano')} style={styles.action} />
+          <Bouton titre="Piano libre" onPress={() => router.push('/piano')} style={styles.actionPrincipale} />
           <Bouton titre="Progression" variante="secondaire" onPress={() => router.push('/stats')} style={styles.action} />
-          <Bouton titre="Réglages" variante="secondaire" onPress={() => router.push('/reglages')} style={styles.action} />
+          <Pressable
+            onPress={() => router.push('/reglages')}
+            accessibilityRole="button"
+            accessibilityLabel="Réglages"
+            style={({ pressed }) => [
+              styles.boutonIcone,
+              { backgroundColor: c.surface, borderColor: c.bordure, opacity: pressed ? 0.75 : 1 },
+            ]}
+          >
+            <Icone nom="reglages" couleur={c.texte} />
+          </Pressable>
         </View>
 
         {NIVEAUX.map((niveau) => (
@@ -57,9 +92,10 @@ export default function Accueil() {
               Niveau {niveau.numero} · {niveau.titre}
             </Text>
             <Text style={[styles.descNiveau, { color: c.texteDiscret }]}>{niveau.description}</Text>
-            <View style={styles.grille}>
+            <View style={styles.liste}>
               {niveau.lecons.map((lecon, i) => {
                 const ouverte = estDebloquee(lecon);
+                const suivante = lecon.id === aJouer;
                 return (
                   <Pressable
                     key={lecon.id}
@@ -67,22 +103,35 @@ export default function Accueil() {
                     onPress={() => router.push(`/lecon/${lecon.id}`)}
                     accessibilityRole="button"
                     accessibilityLabel={`${lecon.titre}${ouverte ? '' : ', verrouillée'}`}
-                    style={({ pressed }) => [styles.carteLecon, { opacity: !ouverte ? 0.5 : pressed ? 0.8 : 1 }]}
+                    style={({ pressed }) => [
+                      styles.carteLecon,
+                      {
+                        backgroundColor: ouverte ? c.surface : 'transparent',
+                        borderColor: suivante ? c.texte : c.bordure,
+                        borderStyle: ouverte ? 'solid' : 'dashed',
+                        opacity: pressed ? 0.8 : 1,
+                      },
+                    ]}
                   >
-                    <Carte style={styles.carteInterieur}>
-                      {ouverte ? (
-                        <Text style={[styles.numero, { color: c.primaire }]}>{`${niveau.numero}.${i + 1}`}</Text>
-                      ) : (
-                        <Icone nom="cadenas" taille={24} couleur={c.texteDiscret} />
-                      )}
-                      <Text style={[styles.titreLecon, { color: c.texte }]} numberOfLines={2}>
-                        {lecon.titre}
+                    <View style={styles.corpsLecon}>
+                      <Text style={[styles.titreLecon, { color: ouverte ? c.texte : c.texteDiscret }]}>
+                        {niveau.numero}.{i + 1} · {lecon.titre}
                       </Text>
-                      <Text style={[styles.cle, { color: c.texteDiscret }]}>
-                        {lecon.cle === 'sol' ? 'Clé de sol' : 'Clé de fa'} · main {lecon.main}
-                      </Text>
+                      <View style={styles.pastilles}>
+                        {notesDeLaLecon(lecon).map((midi) => (
+                          <PastilleNote key={midi} midi={midi} eteinte={!ouverte} />
+                        ))}
+                      </View>
+                    </View>
+                    {!ouverte ? (
+                      <Icone nom="cadenas" couleur={c.texteDiscret} />
+                    ) : suivante ? (
+                      <View style={[styles.rondLecture, { backgroundColor: c.primaire }]}>
+                        <Icone nom="lecture" taille={18} couleur={c.surPrimaire} />
+                      </View>
+                    ) : (
                       <Etoiles nombre={etoiles(lecon.id)} />
-                    </Carte>
+                    )}
                   </Pressable>
                 );
               })}
@@ -101,22 +150,26 @@ export default function Accueil() {
 const styles = StyleSheet.create({
   ecran: { flex: 1 },
   contenu: { padding: 20, paddingBottom: 48 },
-  entete: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 18 },
-  titre: { fontSize: 30, fontWeight: '900' },
-  sousTitre: { fontSize: 16, marginTop: 2 },
-  badge: { alignItems: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1 },
-  badgeTexte: { fontSize: 20, fontWeight: '800' },
-  badgeLegende: { fontSize: 12 },
-  actions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 12 },
-  action: { flexGrow: 1 },
-  niveau: { marginTop: 18 },
+  arcEnCiel: { flexDirection: 'row', gap: 5, marginBottom: 14 },
+  bande: { flex: 1, height: 8, borderRadius: 4 },
+  titre: { fontSize: 34, fontWeight: '900' },
+  sousTitre: { fontSize: 16, fontWeight: '600', marginTop: 2 },
+  tuiles: { flexDirection: 'row', gap: 10, marginTop: 18 },
+  tuile: { flex: 1, padding: 12, borderRadius: 20 },
+  tuileValeur: { fontSize: 28, fontWeight: '900' },
+  tuileLegende: { fontSize: 13, fontWeight: '700' },
+  actions: { flexDirection: 'row', gap: 10, marginTop: 14 },
+  actionPrincipale: { flex: 1.2, paddingHorizontal: 12 },
+  action: { flex: 1, paddingHorizontal: 12 },
+  boutonIcone: { width: 56, height: 56, borderRadius: 18, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  niveau: { marginTop: 26 },
   titreNiveau: { fontSize: 22, fontWeight: '900' },
-  descNiveau: { fontSize: 15, marginTop: 2, marginBottom: 10 },
-  grille: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  carteLecon: { flexGrow: 1, flexBasis: 150, maxWidth: 260 },
-  carteInterieur: { gap: 6, minHeight: 140 },
-  numero: { fontSize: 18, fontWeight: '900' },
-  titreLecon: { fontSize: 18, fontWeight: '800' },
-  cle: { fontSize: 13 },
-  pied: { fontSize: 14, marginTop: 28, textAlign: 'center' },
+  descNiveau: { fontSize: 15, fontWeight: '600', marginTop: 2, marginBottom: 12 },
+  liste: { gap: 10 },
+  carteLecon: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 20, borderWidth: 2 },
+  corpsLecon: { flex: 1, gap: 8 },
+  titreLecon: { fontSize: 17, fontWeight: '800' },
+  pastilles: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
+  rondLecture: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  pied: { fontSize: 14, fontWeight: '600', marginTop: 28, textAlign: 'center' },
 });
