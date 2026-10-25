@@ -1,0 +1,52 @@
+{
+  "expo": {
+    "name": "Solfège Piano",
+    "slug": "solfege-piano",
+    "version": "1.0.0",
+    "scheme": "solfegepiano",
+    "orientation": "default",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true,
+      "requireFullScreen": true,
+      "bundleIdentifier": "fr.solfegepiano.app"
+    },
+    "android": {
+      "package": "fr.solfegepiano.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#4C5FD5",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "predictiveBackGestureEnabled": false
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "Le micro sert à reconnaître les notes que tu joues sur ton piano.",
+          "enableBackgroundPlayback": false
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#4C5FD5"
+        }
+      ],
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

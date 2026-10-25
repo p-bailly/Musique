@@ -1,0 +1,112 @@
+{
+  "niveau": 3,
+  "titre": "Le rythme",
+  "description": "Ronde, blanche, noire, croche : chaque note a une durée.",
+  "lecons": [
+    {
+      "id": "n3-l1",
+      "titre": "La ronde",
+      "description": "La ronde est une note blanche sans hampe : elle dure 4 temps. Joue au bon moment et compte « 1, 2, 3, 4 ».",
+      "cle": "sol",
+      "tempo": 80,
+      "main": "droite",
+      "attente": false,
+      "notes": [
+        { "note": "Do4", "duree": 4 },
+        { "note": "Mi4", "duree": 4 },
+        { "note": "Sol4", "duree": 4 },
+        { "note": "Do4", "duree": 4 }
+      ]
+    },
+    {
+      "id": "n3-l2",
+      "titre": "La blanche",
+      "description": "La blanche a une hampe et une tête vide : elle dure 2 temps (la moitié d'une ronde).",
+      "cle": "sol",
+      "tempo": 80,
+      "main": "droite",
+      "attente": false,
+      "notes": [
+        { "note": "Do4", "duree": 2 },
+        { "note": "Ré4", "duree": 2 },
+        { "note": "Mi4", "duree": 2 },
+        { "note": "Ré4", "duree": 2 },
+        { "note": "Do4", "duree": 2 },
+        { "note": "Mi4", "duree": 2 },
+        { "note": "Do4", "duree": 4 }
+      ]
+    },
+    {
+      "id": "n3-l3",
+      "titre": "La noire",
+      "description": "La noire a une tête pleine : elle dure 1 temps. C'est souvent elle qui donne la pulsation.",
+      "cle": "sol",
+      "tempo": 80,
+      "main": "droite",
+      "attente": false,
+      "notes": [
+        { "note": "Do4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Sol4", "duree": 2 },
+        { "note": "Sol4", "duree": 2 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Do4", "duree": 4 }
+      ]
+    },
+    {
+      "id": "n3-l4",
+      "titre": "La croche",
+      "description": "La croche a un petit crochet : elle dure un demi-temps. Deux croches = une noire. Dis « ti-ti » pour deux croches, « ta » pour une noire.",
+      "cle": "sol",
+      "tempo": 70,
+      "main": "droite",
+      "attente": false,
+      "notes": [
+        { "note": "Do4", "duree": 0.5 },
+        { "note": "Ré4", "duree": 0.5 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Ré4", "duree": 0.5 },
+        { "note": "Mi4", "duree": 0.5 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Mi4", "duree": 0.5 },
+        { "note": "Fa4", "duree": 0.5 },
+        { "note": "Sol4", "duree": 2 },
+        { "note": "Sol4", "duree": 0.5 },
+        { "note": "Fa4", "duree": 0.5 },
+        { "note": "Mi4", "duree": 0.5 },
+        { "note": "Ré4", "duree": 0.5 },
+        { "note": "Do4", "duree": 2 }
+      ]
+    },
+    {
+      "id": "n3-l5",
+      "titre": "Tous les rythmes",
+      "description": "Rondes, blanches, noires et croches mélangées. Écoute la pulsation !",
+      "cle": "sol",
+      "tempo": 72,
+      "main": "droite",
+      "attente": false,
+      "notes": [
+        { "note": "Do4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Sol4", "duree": 2 },
+        { "note": "Sol4", "duree": 0.5 },
+        { "note": "La4", "duree": 0.5 },
+        { "note": "Sol4", "duree": 0.5 },
+        { "note": "Fa4", "duree": 0.5 },
+        { "note": "Mi4", "duree": 2 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Fa4", "duree": 0.5 },
+        { "note": "Mi4", "duree": 0.5 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Do4", "duree": 4 }
+      ]
+    }
+  ]
+}

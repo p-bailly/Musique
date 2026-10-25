@@ -1,0 +1,114 @@
+{
+  "niveau": 1,
+  "titre": "Mes premières notes",
+  "description": "Do, Ré, Mi, Fa, Sol à la main droite, en clé de sol.",
+  "lecons": [
+    {
+      "id": "n1-l1",
+      "titre": "Do et Ré",
+      "description": "Le Do central est la touche blanche juste à gauche du groupe de 2 touches noires, au milieu du clavier. Sur la portée, il se place sur une petite ligne en dessous. Ré est juste à côté, sous la portée. Joue avec le pouce (1) et l'index (2).",
+      "cle": "sol",
+      "tempo": 60,
+      "main": "droite",
+      "notes": [
+        { "note": "Do4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Do4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Do4", "duree": 1 },
+        { "note": "Do4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Do4", "duree": 2 }
+      ]
+    },
+    {
+      "id": "n1-l2",
+      "titre": "Do, Ré, Mi",
+      "description": "Mi est posé sur la première ligne (celle du bas) de la portée. Pouce sur Do, index sur Ré, majeur sur Mi.",
+      "cle": "sol",
+      "tempo": 60,
+      "main": "droite",
+      "notes": [
+        { "note": "Do4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Do4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Do4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Do4", "duree": 2 }
+      ]
+    },
+    {
+      "id": "n1-l3",
+      "titre": "Fa et Sol",
+      "description": "Fa est dans le premier interligne, Sol sur la deuxième ligne. C'est sur cette ligne que s'enroule la clé de sol !",
+      "cle": "sol",
+      "tempo": 60,
+      "main": "droite",
+      "notes": [
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Sol4", "duree": 2 }
+      ]
+    },
+    {
+      "id": "n1-l4",
+      "titre": "De Do à Sol",
+      "description": "Les cinq notes à la suite : un doigt par touche, du pouce (Do) à l'auriculaire (Sol).",
+      "cle": "sol",
+      "tempo": 60,
+      "main": "droite",
+      "notes": [
+        { "note": "Do4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Do4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Do4", "duree": 2 }
+      ]
+    },
+    {
+      "id": "n1-l5",
+      "titre": "Petits sauts",
+      "description": "On saute une note : de ligne en ligne ou d'interligne en interligne. Regarde bien la portée !",
+      "cle": "sol",
+      "tempo": 60,
+      "main": "droite",
+      "notes": [
+        { "note": "Do4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Do4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Do4", "duree": 2 }
+      ]
+    }
+  ]
+}

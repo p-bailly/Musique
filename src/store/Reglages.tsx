@@ -1,0 +1,81 @@
+/**
+ * Réglages de l'application (vitesse, mode attente, noms des notes, thème…),
+ * partagés via un contexte React et sauvegardés sur le téléphone.
+ */
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useColorScheme } from 'react-native';
+import { clair, Palette, sombre } from '@/theme/couleurs';
+import { ecrire, lire } from './stockage';
+
+export type ChoixTheme = 'systeme' | 'clair' | 'sombre';
+
+export interface Reglages {
+  /** Multiplicateur de tempo (0.5 = deux fois plus lent). */
+  vitesse: number;
+  /** Le morceau attend que la bonne touche soit jouée. */
+  modeAttente: boolean;
+  /** Afficher le nom des notes (clavier, blocs, portée). */
+  nomsNotes: boolean;
+  /** Jouer le son du piano quand on touche le clavier à l'écran. */
+  son: boolean;
+  theme: ChoixTheme;
+  /** Accès libre à toutes les leçons, sans devoir débloquer. */
+  toutDebloquer: boolean;
+}
+
+export const REGLAGES_DEFAUT: Reglages = {
+  vitesse: 1,
+  modeAttente: true,
+  nomsNotes: true,
+  son: true,
+  theme: 'systeme',
+  toutDebloquer: false,
+};
+
+const CLE = 'reglages-v1';
+
+interface ValeurContexte {
+  reglages: Reglages;
+  modifier: (partiel: Partial<Reglages>) => void;
+  couleurs: Palette;
+  sombre: boolean;
+}
+
+const Contexte = createContext<ValeurContexte | null>(null);
+
+export function ReglagesProvider({ children }: { children: React.ReactNode }) {
+  const [reglages, setReglages] = useState<Reglages>(REGLAGES_DEFAUT);
+  const schemaSysteme = useColorScheme();
+
+  // Chargement initial depuis le stockage
+  useEffect(() => {
+    lire(CLE, REGLAGES_DEFAUT).then(setReglages);
+  }, []);
+
+  const modifier = useCallback((partiel: Partial<Reglages>) => {
+    setReglages((avant) => {
+      const apres = { ...avant, ...partiel };
+      ecrire(CLE, apres);
+      return apres;
+    });
+  }, []);
+
+  const estSombre = reglages.theme === 'sombre' || (reglages.theme === 'systeme' && schemaSysteme === 'dark');
+
+  const valeur = useMemo(
+    () => ({ reglages, modifier, couleurs: estSombre ? sombre : clair, sombre: estSombre }),
+    [reglages, modifier, estSombre],
+  );
+  return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
+}
+
+export function useReglages(): ValeurContexte {
+  const ctx = useContext(Contexte);
+  if (!ctx) throw new Error('useReglages doit être utilisé dans <ReglagesProvider>');
+  return ctx;
+}
+
+/** Raccourci pour obtenir uniquement la palette de couleurs. */
+export function useCouleurs(): Palette {
+  return useReglages().couleurs;
+}

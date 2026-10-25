@@ -1,0 +1,131 @@
+/**
+ * Piano libre : on joue ce qu'on veut (à l'écran ou au micro) et l'appli
+ * montre le nom de la note et sa place sur la portée. Idéal pour explorer.
+ */
+import React, { useCallback, useEffect, useState } from 'react';
+import { Pressable, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { jouerNote, prechargerSons } from '@/audio/piano';
+import { BoutonMicro } from '@/components/BoutonMicro';
+import { Clavier } from '@/components/Clavier';
+import { NotePortee, Portee } from '@/components/Portee';
+import { useMicro } from '@/hooks/useMicro';
+import { Cle, DO_CENTRAL, nomNote } from '@/music/notes';
+import { useReglages } from '@/store/Reglages';
+import { revenir } from '@/utils/navigation';
+
+/** Octaves proposées : du Do2 au Do4, deux octaves affichées. */
+const DEBUTS = [36, 48, 60];
+
+export default function PianoLibre() {
+  const { reglages, couleurs: c } = useReglages();
+  const { width, height } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const [debut, setDebut] = useState(48);
+  const [historique, setHistorique] = useState<number[]>([]);
+
+  useEffect(() => {
+    prechargerSons(debut, debut + 24);
+  }, [debut]);
+
+  const ajouter = useCallback((midi: number) => {
+    setHistorique((h) => [...h.slice(-7), midi]);
+  }, []);
+
+  const micro = useMicro({ onNote: ajouter });
+  const ignorerMicro = micro.ignorerUnInstant;
+  const son = reglages.son;
+
+  const onAppui = useCallback(
+    (midi: number) => {
+      if (son) {
+        jouerNote(midi);
+        ignorerMicro();
+      }
+      ajouter(midi);
+    },
+    [son, ajouter, ignorerMicro],
+  );
+
+  const derniere = historique[historique.length - 1];
+  // Clé choisie selon la dernière note : grave → clé de fa
+  const cle: Cle = derniere !== undefined && derniere < DO_CENTRAL ? 'fa' : 'sol';
+  const notes: NotePortee[] = historique.map((m, i) => ({
+    midi: m,
+    duree: 1,
+    statut: i === historique.length - 1 ? 'actuelle' : 'futur',
+  }));
+
+  const L = width - insets.left - insets.right;
+  const H = height - insets.top - insets.bottom;
+  const hClavier = Math.round(H * 0.42);
+  const hHaut = H - hClavier;
+
+  return (
+    <View
+      style={[
+        styles.ecran,
+        { backgroundColor: c.fond, paddingTop: insets.top, paddingLeft: insets.left, paddingRight: insets.right, paddingBottom: insets.bottom },
+      ]}
+    >
+      <View style={[styles.haut, { height: hHaut }]}>
+        <View style={styles.colonne}>
+          <Pressable
+            onPress={() => revenir()}
+            accessibilityRole="button"
+            accessibilityLabel="Retour"
+            style={[styles.rond, { backgroundColor: c.surfaceAlt, borderColor: c.bordure }]}
+          >
+            <Text style={{ fontSize: 20, fontWeight: '900', color: c.texte }}>←</Text>
+          </Pressable>
+          <BoutonMicro etat={micro.etat} niveau={micro.niveau} derniereNote={micro.derniereNote} onPress={() => (micro.etat === 'actif' ? micro.arreter() : micro.demarrer())} />
+          <View style={styles.octaves}>
+            {DEBUTS.map((d) => (
+              <Pressable
+                key={d}
+                onPress={() => setDebut(d)}
+                style={[styles.octave, { backgroundColor: d === debut ? c.primaire : c.surfaceAlt }]}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: d === debut }}
+              >
+                <Text style={{ color: d === debut ? c.surPrimaire : c.texte, fontWeight: '800' }}>
+                  {d === 36 ? 'Grave' : d === 48 ? 'Milieu' : 'Aigu'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </View>
+
+        <View style={[styles.grandeNote, { backgroundColor: c.surface, borderColor: c.bordure }]}>
+          <Text style={[styles.nom, { color: c.primaire }]}>{derniere !== undefined ? nomNote(derniere) : '?'}</Text>
+          <Text style={{ color: c.texteDiscret }}>{derniere !== undefined ? (cle === 'sol' ? 'clé de sol' : 'clé de fa') : 'Joue une note'}</Text>
+        </View>
+
+        <View style={[styles.portee, { backgroundColor: c.surface, borderColor: c.bordure }]}>
+          <Portee cle={cle} notes={notes} largeur={Math.max(120, L - 336)} hauteur={hHaut - 16} afficherNoms={reglages.nomsNotes} />
+        </View>
+      </View>
+
+      <Clavier
+        min={debut}
+        max={debut + 24}
+        largeur={L}
+        hauteur={hClavier}
+        onAppui={onAppui}
+        afficherNoms={reglages.nomsNotes}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  ecran: { flex: 1 },
+  haut: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 6 },
+  colonne: { width: 130, gap: 8, alignItems: 'flex-start' },
+  rond: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  octaves: { flexDirection: 'row', gap: 4, flexWrap: 'wrap' },
+  octave: { paddingHorizontal: 8, paddingVertical: 6, borderRadius: 10 },
+  grandeNote: { width: 170, alignSelf: 'stretch', marginVertical: 8, borderRadius: 16, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  nom: { fontSize: 56, fontWeight: '900' },
+  portee: { flex: 1, alignSelf: 'stretch', marginVertical: 8, borderRadius: 16, borderWidth: 1, overflow: 'hidden', justifyContent: 'center' },
+});

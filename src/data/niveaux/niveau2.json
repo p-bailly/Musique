@@ -1,0 +1,142 @@
+{
+  "niveau": 2,
+  "titre": "Toute l'octave, puis la clé de fa",
+  "description": "La, Si, le Do aigu, puis la main gauche en clé de fa.",
+  "lecons": [
+    {
+      "id": "n2-l1",
+      "titre": "La et Si",
+      "description": "La est dans le deuxième interligne, Si sur la troisième ligne (celle du milieu).",
+      "cle": "sol",
+      "tempo": 60,
+      "main": "droite",
+      "notes": [
+        { "note": "Sol4", "duree": 1 },
+        { "note": "La4", "duree": 1 },
+        { "note": "Si4", "duree": 1 },
+        { "note": "La4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "La4", "duree": 1 },
+        { "note": "Si4", "duree": 1 },
+        { "note": "Si4", "duree": 1 },
+        { "note": "La4", "duree": 1 },
+        { "note": "Sol4", "duree": 2 }
+      ]
+    },
+    {
+      "id": "n2-l2",
+      "titre": "La gamme de Do",
+      "description": "Do Ré Mi Fa Sol La Si Do : voici l'octave complète ! Le Do aigu est dans le troisième interligne.",
+      "cle": "sol",
+      "tempo": 60,
+      "main": "droite",
+      "notes": [
+        { "note": "Do4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "La4", "duree": 1 },
+        { "note": "Si4", "duree": 1 },
+        { "note": "Do5", "duree": 2 },
+        { "note": "Si4", "duree": 1 },
+        { "note": "La4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Do4", "duree": 2 }
+      ]
+    },
+    {
+      "id": "n2-l3",
+      "titre": "Lire en sautant",
+      "description": "Des notes dans le désordre sur toute l'octave : prends le temps de lire chaque note sur la portée.",
+      "cle": "sol",
+      "tempo": 60,
+      "main": "droite",
+      "notes": [
+        { "note": "Do4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Do5", "duree": 1 },
+        { "note": "La4", "duree": 1 },
+        { "note": "Fa4", "duree": 1 },
+        { "note": "Ré4", "duree": 1 },
+        { "note": "Si4", "duree": 1 },
+        { "note": "Sol4", "duree": 1 },
+        { "note": "Do5", "duree": 1 },
+        { "note": "Mi4", "duree": 1 },
+        { "note": "Do4", "duree": 2 }
+      ]
+    },
+    {
+      "id": "n2-l4",
+      "titre": "Clé de fa : Do, Ré, Mi",
+      "description": "La clé de fa sert pour les notes graves, jouées à la main gauche. Ses deux points entourent la ligne du Fa (4e ligne). Le Do grave est dans le deuxième interligne.",
+      "cle": "fa",
+      "tempo": 60,
+      "main": "gauche",
+      "notes": [
+        { "note": "Do3", "duree": 1 },
+        { "note": "Ré3", "duree": 1 },
+        { "note": "Mi3", "duree": 1 },
+        { "note": "Ré3", "duree": 1 },
+        { "note": "Do3", "duree": 1 },
+        { "note": "Mi3", "duree": 1 },
+        { "note": "Ré3", "duree": 1 },
+        { "note": "Do3", "duree": 1 },
+        { "note": "Do3", "duree": 1 },
+        { "note": "Mi3", "duree": 1 },
+        { "note": "Ré3", "duree": 1 },
+        { "note": "Do3", "duree": 2 }
+      ]
+    },
+    {
+      "id": "n2-l5",
+      "titre": "Clé de fa : Fa, Sol, La, Si",
+      "description": "Fa est sur la ligne entourée par les deux points de la clé. Puis Sol, La et Si montent vers le haut de la portée.",
+      "cle": "fa",
+      "tempo": 60,
+      "main": "gauche",
+      "notes": [
+        { "note": "Fa3", "duree": 1 },
+        { "note": "Sol3", "duree": 1 },
+        { "note": "La3", "duree": 1 },
+        { "note": "Si3", "duree": 1 },
+        { "note": "La3", "duree": 1 },
+        { "note": "Sol3", "duree": 1 },
+        { "note": "Fa3", "duree": 1 },
+        { "note": "La3", "duree": 1 },
+        { "note": "Si3", "duree": 1 },
+        { "note": "Sol3", "duree": 1 },
+        { "note": "Fa3", "duree": 2 }
+      ]
+    },
+    {
+      "id": "n2-l6",
+      "titre": "Clé de fa : la gamme",
+      "description": "La gamme de Do à la main gauche, du Do grave jusqu'au Do central (sur une petite ligne au-dessus de la portée).",
+      "cle": "fa",
+      "tempo": 60,
+      "main": "gauche",
+      "notes": [
+        { "note": "Do3", "duree": 1 },
+        { "note": "Ré3", "duree": 1 },
+        { "note": "Mi3", "duree": 1 },
+        { "note": "Fa3", "duree": 1 },
+        { "note": "Sol3", "duree": 1 },
+        { "note": "La3", "duree": 1 },
+        { "note": "Si3", "duree": 1 },
+        { "note": "Do4", "duree": 2 },
+        { "note": "Si3", "duree": 1 },
+        { "note": "La3", "duree": 1 },
+        { "note": "Sol3", "duree": 1 },
+        { "note": "Fa3", "duree": 1 },
+        { "note": "Mi3", "duree": 1 },
+        { "note": "Ré3", "duree": 1 },
+        { "note": "Do3", "duree": 2 }
+      ]
+    }
+  ]
+}
