@@ -22,6 +22,8 @@ export interface Progression {
   };
   /** Minutes de pratique par jour (« AAAA-MM-JJ » → minutes). */
   jours: Record<string, number>;
+  /** Exercices (cartes flash, dictée) : meilleur score et nombre de parties. */
+  exercices: Record<string, { record: number; parties: number }>;
 }
 
 const PROGRESSION_VIDE: Progression = {
@@ -29,6 +31,7 @@ const PROGRESSION_VIDE: Progression = {
   serie: { actuelle: 0, record: 0, dernierJour: null },
   totaux: { notesReussies: 0, erreurs: 0, secondesPratique: 0, leconsTerminees: 0 },
   jours: {},
+  exercices: {},
 };
 
 const CLE = 'progression-v1';
@@ -57,6 +60,8 @@ interface ValeurContexte {
   /** Série en cours, remise à 0 si un jour a été manqué. */
   serieActuelle: number;
   enregistrerPartie: (bilan: BilanPartie) => void;
+  /** Fin d'un exercice : renvoie vrai si c'est un nouveau record. */
+  enregistrerExercice: (id: string, score: number, secondes: number) => boolean;
   reinitialiser: () => void;
 }
 
@@ -98,11 +103,39 @@ export function ProgressionProvider({ children }: { children: React.ReactNode })
           leconsTerminees: p.totaux.leconsTerminees + (b.etoiles > 0 ? 1 : 0),
         },
         jours: { ...p.jours, [aujourdhui]: (p.jours[aujourdhui] ?? 0) + b.secondes / 60 },
+        exercices: p.exercices ?? {},
       };
       ecrire(CLE, nouvelle);
       return nouvelle;
     });
   }, []);
+
+  const enregistrerExercice = useCallback(
+    (id: string, score: number, secondes: number) => {
+      const ancien = progression.exercices?.[id] ?? { record: 0, parties: 0 };
+      setProgression((p) => {
+        const aujourdhui = jourLocal();
+        // L'entraînement compte aussi pour la série de jours
+        let serie = p.serie;
+        if (score > 0 && serie.dernierJour !== aujourdhui) {
+          const actuelle = serie.dernierJour === jourLocal(-1) ? serie.actuelle + 1 : 1;
+          serie = { actuelle, record: Math.max(serie.record, actuelle), dernierJour: aujourdhui };
+        }
+        const precedent = p.exercices?.[id] ?? { record: 0, parties: 0 };
+        const nouvelle: Progression = {
+          ...p,
+          serie,
+          totaux: { ...p.totaux, secondesPratique: p.totaux.secondesPratique + secondes },
+          jours: { ...p.jours, [aujourdhui]: (p.jours[aujourdhui] ?? 0) + secondes / 60 },
+          exercices: { ...p.exercices, [id]: { record: Math.max(precedent.record, score), parties: precedent.parties + 1 } },
+        };
+        ecrire(CLE, nouvelle);
+        return nouvelle;
+      });
+      return score > ancien.record;
+    },
+    [progression.exercices],
+  );
 
   const reinitialiser = useCallback(() => {
     setProgression(PROGRESSION_VIDE);
@@ -113,8 +146,8 @@ export function ProgressionProvider({ children }: { children: React.ReactNode })
   const serieActuelle = dernierJour === jourLocal() || dernierJour === jourLocal(-1) ? actuelle : 0;
 
   const valeur = useMemo(
-    () => ({ progression, serieActuelle, enregistrerPartie, reinitialiser }),
-    [progression, serieActuelle, enregistrerPartie, reinitialiser],
+    () => ({ progression, serieActuelle, enregistrerPartie, enregistrerExercice, reinitialiser }),
+    [progression, serieActuelle, enregistrerPartie, enregistrerExercice, reinitialiser],
   );
   return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
 }

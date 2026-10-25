@@ -40,6 +40,9 @@ function Navigation() {
         <Stack.Screen name="stats" options={{ title: 'Ma progression' }} />
         <Stack.Screen name="reglages" options={{ title: 'Réglages' }} />
         <Stack.Screen name="calibration" options={{ title: 'Calibrer le micro' }} />
+        <Stack.Screen name="exercices/index" options={{ title: 'Exercices' }} />
+        <Stack.Screen name="exercices/lecture" options={{ title: 'Cartes flash' }} />
+        <Stack.Screen name="exercices/dictee" options={{ title: 'Dictée musicale' }} />
         {/* Écrans de jeu : plein écran, en paysage */}
         <Stack.Screen name="lecon/[id]" options={{ headerShown: false, orientation: 'landscape' }} />
         <Stack.Screen name="piano" options={{ headerShown: false, orientation: 'landscape' }} />

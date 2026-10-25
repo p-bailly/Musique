@@ -86,6 +86,13 @@ export default function Accueil() {
           </Pressable>
         </View>
 
+        <Bouton
+          titre="Exercices : lecture et oreille"
+          variante="secondaire"
+          onPress={() => router.push('/exercices')}
+          style={styles.exercices}
+        />
+
         {NIVEAUX.map((niveau) => (
           <View key={niveau.numero} style={styles.niveau}>
             <Text style={[styles.titreNiveau, { color: c.texte }]}>
@@ -162,6 +169,7 @@ const styles = StyleSheet.create({
   actionPrincipale: { flex: 1, paddingHorizontal: 10 },
   action: { flex: 1, paddingHorizontal: 10 },
   boutonIcone: { width: 56, height: 56, borderRadius: 18, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  exercices: { marginTop: 10 },
   niveau: { marginTop: 26 },
   titreNiveau: { fontSize: 22, fontWeight: '900' },
   descNiveau: { fontSize: 15, fontWeight: '600', marginTop: 2, marginBottom: 12 },
