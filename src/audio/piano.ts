@@ -1,9 +1,11 @@
 /**
- * Lecture des sons de piano (échantillons WAV générés localement).
- * Un lecteur est créé par note, à la demande, puis réutilisé.
+ * Lecture des sons de piano (échantillons du Salamander Grand Piano, voir
+ * scripts/generate-sounds.js) et des clics du métronome.
+ * Un lecteur est créé par note, à la demande, puis réutilisé : plusieurs notes
+ * peuvent sonner ensemble (accords).
  */
 import { AudioPlayer, createAudioPlayer, setAudioModeAsync } from 'expo-audio';
-import { MIDI_SON_MAX, MIDI_SON_MIN, SAMPLES } from './samples';
+import { CLIC_FAIBLE, CLIC_FORT, MIDI_SON_MAX, MIDI_SON_MIN, SAMPLES } from './samples';
 
 const lecteurs = new Map<number, AudioPlayer>();
 let modeConfigure = false;
@@ -49,4 +51,28 @@ export function jouerNote(midi: number) {
   } catch {
     // Ignoré : un son manqué ne doit jamais bloquer le jeu.
   }
+}
+
+const clics: { fort?: AudioPlayer; faible?: AudioPlayer } = {};
+
+/** Joue un clic de métronome (plus aigu sur le premier temps de la mesure). */
+export function jouerClic(fort: boolean) {
+  try {
+    if (!modeConfigure) configurerAudio();
+    const cle = fort ? 'fort' : 'faible';
+    let p = clics[cle];
+    if (!p) {
+      p = createAudioPlayer(fort ? CLIC_FORT : CLIC_FAIBLE);
+      clics[cle] = p;
+    }
+    p.seekTo(0).catch(() => {});
+    p.play();
+  } catch {
+    // Un clic manqué ne doit jamais bloquer le jeu.
+  }
+}
+
+/** Joue plusieurs notes ensemble (accord). */
+export function jouerAccord(midis: number[]) {
+  for (const m of midis) jouerNote(m);
 }

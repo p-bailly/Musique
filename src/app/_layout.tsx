@@ -14,6 +14,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { MidiProvider } from '@/store/Midi';
 import { ProgressionProvider } from '@/store/Progression';
 import { ReglagesProvider, useReglages } from '@/store/Reglages';
 
@@ -38,6 +39,10 @@ function Navigation() {
         <Stack.Screen name="index" options={{ title: 'Solfège Piano', headerShown: false }} />
         <Stack.Screen name="stats" options={{ title: 'Ma progression' }} />
         <Stack.Screen name="reglages" options={{ title: 'Réglages' }} />
+        <Stack.Screen name="calibration" options={{ title: 'Calibrer le micro' }} />
+        <Stack.Screen name="exercices/index" options={{ title: 'Exercices' }} />
+        <Stack.Screen name="exercices/lecture" options={{ title: 'Cartes flash' }} />
+        <Stack.Screen name="exercices/dictee" options={{ title: 'Dictée musicale' }} />
         {/* Écrans de jeu : plein écran, en paysage */}
         <Stack.Screen name="lecon/[id]" options={{ headerShown: false, orientation: 'landscape' }} />
         <Stack.Screen name="piano" options={{ headerShown: false, orientation: 'landscape' }} />
@@ -63,7 +68,9 @@ export default function Racine() {
     <SafeAreaProvider>
       <ReglagesProvider>
         <ProgressionProvider>
-          <Navigation />
+          <MidiProvider>
+            <Navigation />
+          </MidiProvider>
         </ProgressionProvider>
       </ReglagesProvider>
     </SafeAreaProvider>

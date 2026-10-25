@@ -8,15 +8,16 @@ import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { NoteMorceau } from '@/data/lecons';
 import { EtatNote } from '@/hooks/useMoteurJeu';
-import { estToucheNoire, nomNote } from '@/music/notes';
+import { estToucheNoire, nomEcrit } from '@/music/notes';
 import { useCouleurs } from '@/store/Reglages';
-import { couleurNote } from '@/theme/couleurs';
+import { couleurDegre } from '@/theme/couleurs';
 import { geometrieClavier } from './geometrieClavier';
 
 interface Props {
   notes: NoteMorceau[];
   etats: EtatNote[];
-  prochaine: number;
+  /** Groupe (accord) à jouer maintenant. */
+  groupe: number;
   /** Temps actuel du morceau (en temps musicaux). */
   temps: number;
   min: number;
@@ -31,7 +32,7 @@ interface Props {
 export function NotesQuiTombent({
   notes,
   etats,
-  prochaine,
+  groupe,
   temps,
   min,
   max,
@@ -66,9 +67,9 @@ export function NotesQuiTombent({
         if (!t) return null;
 
         const etat = etats[i];
-        const estProchaine = i === prochaine;
+        const estProchaine = n.groupe === groupe && etat === 'attente';
         // Une note manquée devient grise (le rouge est déjà la couleur du Do)
-        const couleur = couleurNote(n.midi);
+        const couleur = couleurDegre(n.degre);
         const fond = etat === 'manquee' ? c.texteDiscret : couleur.fond;
         const texte = etat === 'manquee' ? c.fond : couleur.texte;
         const marge = t.noire ? 1 : 3;
@@ -90,7 +91,7 @@ export function NotesQuiTombent({
           >
             {afficherNoms && (
               <Text style={[styles.nom, { color: texte, fontSize: estToucheNoire(n.midi) ? 9 : 12 }]} numberOfLines={1}>
-                {nomNote(n.midi)}
+                {nomEcrit(n)}
               </Text>
             )}
           </View>

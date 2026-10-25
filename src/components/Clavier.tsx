@@ -9,7 +9,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { DO_CENTRAL, estToucheNoire, nomNote } from '@/music/notes';
 import { useCouleurs } from '@/store/Reglages';
-import { couleurNote } from '@/theme/couleurs';
+import { couleurDegre, couleurNote } from '@/theme/couleurs';
 import { geometrieClavier } from './geometrieClavier';
 
 interface Props {
@@ -18,8 +18,8 @@ interface Props {
   largeur: number;
   hauteur: number;
   onAppui: (midi: number) => void;
-  /** Touche(s) à mettre en surbrillance (prochaine note). */
-  surbrillance?: number | null;
+  /** Touches à allumer (notes à jouer : une seule, ou un accord), avec leur degré écrit pour la couleur. */
+  surbrillance?: { midi: number; degre?: number }[];
   /** Dernier retour (juste / faux) à afficher sur une touche. */
   retour?: { midi: number; type: 'ok' | 'erreur'; id: number } | null;
   afficherNoms: boolean;
@@ -56,16 +56,25 @@ function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour
     });
   };
 
+  /** Couleur de la note allumée sur cette touche (Sib prend la couleur du Si), ou null. */
+  const allumee = (midi: number) => {
+    const s = surbrillance?.find((n) => n.midi === midi);
+    if (!s) return null;
+    return s.degre !== undefined ? couleurDegre(s.degre) : couleurNote(midi);
+  };
+
   /** Texte posé sur la touche : lisible sur la couleur de la note quand elle est allumée. */
   const couleurNom = (midi: number, noire: boolean) => {
     if (flash && flash.midi === midi) return '#FFFFFF';
-    if (surbrillance === midi) return couleurNote(midi).texte;
+    const a = allumee(midi);
+    if (a) return a.texte;
     return noire ? c.texteToucheNoire : c.texteToucheBlanche;
   };
 
   const couleurTouche = (midi: number, noire: boolean) => {
     if (flash && flash.midi === midi) return flash.type === 'ok' ? c.succes : c.erreur;
-    if (surbrillance === midi) return couleurNote(midi).fond;
+    const a = allumee(midi);
+    if (a) return a.fond;
     if (enfoncees.has(midi)) return noire ? '#4A463D' : c.surfaceAlt;
     return noire ? c.toucheNoire : c.toucheBlanche;
   };

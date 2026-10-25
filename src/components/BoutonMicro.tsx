@@ -1,6 +1,7 @@
 /**
  * Bouton pour activer / couper le micro, avec un petit vumètre
- * et la dernière note entendue.
+ * et la dernière note entendue. Quand un clavier MIDI est connecté,
+ * il le signale à la place (le micro est alors inutile).
  */
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
@@ -14,10 +15,24 @@ interface Props {
   niveau: number;
   derniereNote: number | null;
   onPress: () => void;
+  /** Nom du clavier MIDI connecté, s'il y en a un. */
+  midi?: string | null;
 }
 
-export function BoutonMicro({ etat, niveau, derniereNote, onPress }: Props) {
+export function BoutonMicro({ etat, niveau, derniereNote, onPress, midi }: Props) {
   const c = useCouleurs();
+  if (midi) {
+    return (
+      <View style={[styles.bouton, { backgroundColor: c.primaire, borderColor: c.primaire }]} accessibilityLabel={`Clavier MIDI : ${midi}`}>
+        <Text style={[styles.texte, { color: c.surPrimaire }]} numberOfLines={1}>
+          MIDI
+        </Text>
+        <Text style={{ color: c.surPrimaire, fontSize: 11, maxWidth: 120 }} numberOfLines={1}>
+          {midi}
+        </Text>
+      </View>
+    );
+  }
   const actif = etat === 'actif';
   const libelle =
     etat === 'actif'

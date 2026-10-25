@@ -11,15 +11,15 @@
       "tempo": 60,
       "main": "droite",
       "notes": [
-        { "note": "Do4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Do4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Do4", "duree": 1 },
-        { "note": "Do4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Do4", "duree": 2 }
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Do4", "duree": 2, "doigt": 1 }
       ]
     },
     {
@@ -30,18 +30,18 @@
       "tempo": 60,
       "main": "droite",
       "notes": [
-        { "note": "Do4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Do4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Do4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Do4", "duree": 2 }
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Do4", "duree": 2, "doigt": 1 }
       ]
     },
     {
@@ -52,17 +52,17 @@
       "tempo": 60,
       "main": "droite",
       "notes": [
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Fa4", "duree": 1 },
-        { "note": "Sol4", "duree": 1 },
-        { "note": "Fa4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Sol4", "duree": 1 },
-        { "note": "Fa4", "duree": 1 },
-        { "note": "Sol4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Fa4", "duree": 1 },
-        { "note": "Sol4", "duree": 2 }
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Fa4", "duree": 1, "doigt": 4 },
+        { "note": "Sol4", "duree": 1, "doigt": 5 },
+        { "note": "Fa4", "duree": 1, "doigt": 4 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Sol4", "duree": 1, "doigt": 5 },
+        { "note": "Fa4", "duree": 1, "doigt": 4 },
+        { "note": "Sol4", "duree": 1, "doigt": 5 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Fa4", "duree": 1, "doigt": 4 },
+        { "note": "Sol4", "duree": 2, "doigt": 5 }
       ]
     },
     {
@@ -73,19 +73,19 @@
       "tempo": 60,
       "main": "droite",
       "notes": [
-        { "note": "Do4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Fa4", "duree": 1 },
-        { "note": "Sol4", "duree": 1 },
-        { "note": "Fa4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Do4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Sol4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Do4", "duree": 2 }
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Fa4", "duree": 1, "doigt": 4 },
+        { "note": "Sol4", "duree": 1, "doigt": 5 },
+        { "note": "Fa4", "duree": 1, "doigt": 4 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Sol4", "duree": 1, "doigt": 5 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Do4", "duree": 2, "doigt": 1 }
       ]
     },
     {
@@ -96,18 +96,18 @@
       "tempo": 60,
       "main": "droite",
       "notes": [
-        { "note": "Do4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Fa4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Sol4", "duree": 1 },
-        { "note": "Fa4", "duree": 1 },
-        { "note": "Ré4", "duree": 1 },
-        { "note": "Do4", "duree": 1 },
-        { "note": "Sol4", "duree": 1 },
-        { "note": "Mi4", "duree": 1 },
-        { "note": "Do4", "duree": 2 }
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Fa4", "duree": 1, "doigt": 4 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Sol4", "duree": 1, "doigt": 5 },
+        { "note": "Fa4", "duree": 1, "doigt": 4 },
+        { "note": "Ré4", "duree": 1, "doigt": 2 },
+        { "note": "Do4", "duree": 1, "doigt": 1 },
+        { "note": "Sol4", "duree": 1, "doigt": 5 },
+        { "note": "Mi4", "duree": 1, "doigt": 3 },
+        { "note": "Do4", "duree": 2, "doigt": 1 }
       ]
     }
   ]

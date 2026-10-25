@@ -6,9 +6,9 @@ import React from 'react';
 import { Pressable, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import { Text } from '@/components/Texte';
 import { Icone } from '@/components/Icones';
-import { nomNote } from '@/music/notes';
+import { ecrireMidi, NoteEcrite, nomEcrit } from '@/music/notes';
 import { useCouleurs } from '@/store/Reglages';
-import { couleurNote } from '@/theme/couleurs';
+import { couleurDegre } from '@/theme/couleurs';
 
 interface BoutonProps {
   titre: string;
@@ -65,12 +65,13 @@ export function Etoiles({ nombre, taille = 18 }: { nombre: number; taille?: numb
 }
 
 /** Pastille d'une note, à sa couleur (Do rouge, Ré orange…) ; grisée si `eteinte`. */
-export function PastilleNote({ midi, eteinte }: { midi: number; eteinte?: boolean }) {
+export function PastilleNote({ note, eteinte }: { note: NoteEcrite | number; eteinte?: boolean }) {
   const c = useCouleurs();
-  const n = couleurNote(midi);
+  const ecrite = typeof note === 'number' ? ecrireMidi(note) : note;
+  const n = couleurDegre(ecrite.degre);
   return (
     <View style={[styles.pastilleNote, { backgroundColor: eteinte ? c.surfaceAlt : n.fond }]}>
-      <Text style={[styles.texteNote, { color: eteinte ? c.texteDiscret : n.texte }]}>{nomNote(midi)}</Text>
+      <Text style={[styles.texteNote, { color: eteinte ? c.texteDiscret : n.texte }]}>{nomEcrit(ecrite)}</Text>
     </View>
   );
 }

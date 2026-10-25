@@ -10,16 +10,16 @@ import { Icone } from '@/components/Icones';
 import { Text } from '@/components/Texte';
 import { Bouton, Etoiles, PastilleNote } from '@/components/ui';
 import { NIVEAUX, Lecon, TOUTES_LES_LECONS } from '@/data/lecons';
-import { nomNote } from '@/music/notes';
+import { NoteEcrite, nomEcrit } from '@/music/notes';
 import { useProgression } from '@/store/Progression';
 import { useReglages } from '@/store/Reglages';
 import { ARC_EN_CIEL } from '@/theme/couleurs';
 
 /** Notes distinctes d'une leçon (une par nom, de la plus grave à la plus aiguë). */
-function notesDeLaLecon(lecon: Lecon): number[] {
-  const parNom = new Map<string, number>();
+function notesDeLaLecon(lecon: Lecon): NoteEcrite[] {
+  const parNom = new Map<string, NoteEcrite>();
   for (const n of [...lecon.notes].sort((a, b) => a.midi - b.midi)) {
-    if (!parNom.has(nomNote(n.midi))) parNom.set(nomNote(n.midi), n.midi);
+    if (!parNom.has(nomEcrit(n))) parNom.set(nomEcrit(n), n);
   }
   return [...parNom.values()];
 }
@@ -86,6 +86,13 @@ export default function Accueil() {
           </Pressable>
         </View>
 
+        <Bouton
+          titre="Exercices : lecture et oreille"
+          variante="secondaire"
+          onPress={() => router.push('/exercices')}
+          style={styles.exercices}
+        />
+
         {NIVEAUX.map((niveau) => (
           <View key={niveau.numero} style={styles.niveau}>
             <Text style={[styles.titreNiveau, { color: c.texte }]}>
@@ -118,8 +125,8 @@ export default function Accueil() {
                         {niveau.numero}.{i + 1} · {lecon.titre}
                       </Text>
                       <View style={styles.pastilles}>
-                        {notesDeLaLecon(lecon).map((midi) => (
-                          <PastilleNote key={midi} midi={midi} eteinte={!ouverte} />
+                        {notesDeLaLecon(lecon).map((n) => (
+                          <PastilleNote key={nomEcrit(n)} note={n} eteinte={!ouverte} />
                         ))}
                       </View>
                     </View>
@@ -162,6 +169,7 @@ const styles = StyleSheet.create({
   actionPrincipale: { flex: 1, paddingHorizontal: 10 },
   action: { flex: 1, paddingHorizontal: 10 },
   boutonIcone: { width: 56, height: 56, borderRadius: 18, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  exercices: { marginTop: 10 },
   niveau: { marginTop: 26 },
   titreNiveau: { fontSize: 22, fontWeight: '900' },
   descNiveau: { fontSize: 15, fontWeight: '600', marginTop: 2, marginBottom: 12 },
