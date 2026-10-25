@@ -30,9 +30,18 @@ export default function PianoLibre() {
 
   const ajouter = useCallback((midi: number) => {
     setHistorique((h) => [...h.slice(-7), midi]);
+    // Le clavier affiché suit la note jouée sur le vrai piano
+    setDebut((d) => (midi >= d && midi <= d + 24 ? d : DEBUTS.reduce((a, b) => (Math.abs(midi - 12 - b) < Math.abs(midi - 12 - a) ? b : a))));
   }, []);
 
+  const surPiano = reglages.entree === 'piano';
   const micro = useMicro({ onNote: ajouter });
+
+  // Sur un vrai piano, le micro s'allume tout seul
+  const demarrerMicro = micro.demarrer;
+  useEffect(() => {
+    if (surPiano) demarrerMicro();
+  }, [surPiano, demarrerMicro]);
   const ignorerMicro = micro.ignorerUnInstant;
   const son = reglages.son;
 
@@ -98,7 +107,7 @@ export default function PianoLibre() {
 
         <View style={[styles.grandeNote, { backgroundColor: c.surface, borderColor: c.bordure }]}>
           <Text style={[styles.nom, { color: c.primaire }]}>{derniere !== undefined ? nomNote(derniere) : '?'}</Text>
-          <Text style={{ color: c.texteDiscret }}>{derniere !== undefined ? (cle === 'sol' ? 'clé de sol' : 'clé de fa') : 'Joue une note'}</Text>
+          <Text style={{ color: c.texteDiscret }}>{derniere !== undefined ? (cle === 'sol' ? 'clé de sol' : 'clé de fa') : surPiano ? 'Joue une note sur ton piano' : 'Joue une note'}</Text>
         </View>
 
         <View style={[styles.portee, { backgroundColor: c.surface, borderColor: c.bordure }]}>
@@ -113,6 +122,8 @@ export default function PianoLibre() {
         hauteur={hClavier}
         onAppui={onAppui}
         afficherNoms={reglages.nomsNotes}
+        surbrillance={derniere}
+        interactif={!surPiano}
       />
     </View>
   );

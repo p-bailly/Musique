@@ -8,8 +8,12 @@ import { clair, Palette, sombre } from '@/theme/couleurs';
 import { ecrire, lire } from './stockage';
 
 export type ChoixTheme = 'systeme' | 'clair' | 'sombre';
+/** Où l'élève joue : sur son vrai piano (écouté au micro) ou sur le clavier de l'écran. */
+export type Entree = 'piano' | 'ecran';
 
 export interface Reglages {
+  /** Mode de jeu principal : vrai piano (micro) par défaut. */
+  entree: Entree;
   /** Multiplicateur de tempo (0.5 = deux fois plus lent). */
   vitesse: number;
   /** Le morceau attend que la bonne touche soit jouée. */
@@ -24,6 +28,7 @@ export interface Reglages {
 }
 
 export const REGLAGES_DEFAUT: Reglages = {
+  entree: 'piano',
   vitesse: 1,
   modeAttente: true,
   nomsNotes: true,

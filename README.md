@@ -1,14 +1,18 @@
 # 🎹 Solfège Piano
 
 Application mobile (iOS et Android) pour **apprendre le solfège et le piano** quand on est grand débutant :
-lire les notes (Do, Ré, Mi, Fa, Sol, La, Si) sur la portée et les jouer sur le clavier à l'écran ou sur un
-**vrai piano** grâce au micro du téléphone.
+lire les notes (Do, Ré, Mi, Fa, Sol, La, Si) sur la portée et **les jouer soi-même sur son vrai piano** :
+le téléphone, posé sur le pupitre, écoute au micro et vérifie chaque note. (On peut aussi jouer sur le clavier
+de l'écran, au choix dans les réglages.)
 
 React Native + Expo (SDK 58) · TypeScript · 100 % hors-ligne · sans compte ni serveur.
 
 ## Fonctionnalités (MVP)
 
-- **Clavier virtuel** de 2 octaves (+ le Do final), avec le nom français de chaque touche et un repère sur le do central.
+- **Jeu sur votre vrai piano (mode par défaut)** : le micro s'allume tout seul au début de chaque leçon ; le clavier
+  affiché sert de guide (où poser les doigts) et ne réagit pas au toucher.
+- **Clavier virtuel** de 2 octaves (+ le Do final), avec le nom français de chaque touche et un repère sur le do
+  central ; il devient jouable au toucher en mode « sur l'écran ».
 - **Notes qui tombent** : les blocs descendent vers leur touche ; la touche à jouer est en surbrillance jaune.
 - **Mode attente** : le morceau s'arrête tant que la bonne touche n'est pas jouée. La touche s'allume en vert si c'est
   juste, en rouge si c'est faux, avec un message (« Oups ! C'était Ré, pas Mi »).
@@ -24,7 +28,7 @@ React Native + Expo (SDK 58) · TypeScript · 100 % hors-ligne · sans compte ni
      *Ode à la joie*, *Hänschen klein*
 - **Progression** : 1 à 3 étoiles par leçon (selon la précision), leçons débloquées au fur et à mesure,
   série de jours consécutifs 🔥, statistiques et graphique des 7 derniers jours.
-- **Réglages** : vitesse (×0,5 à ×1,5), mode attente, noms des notes, son du clavier, thème clair/sombre/automatique,
+- **Réglages** : je joue sur mon piano / sur l'écran, vitesse (×0,5 à ×1,5), mode attente, noms des notes, son du clavier, thème clair/sombre/automatique,
   accès à toutes les leçons, remise à zéro.
 - **Piano libre** : on joue ce qu'on veut, l'appli affiche le nom de la note et sa place sur la portée.
 - Écrans de jeu en **paysage**, grands boutons, thème clair et sombre.

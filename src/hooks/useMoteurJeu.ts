@@ -201,7 +201,7 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin }: Options) {
         s.prochaine++;
         setEtats([...s.etats]);
         setProchaine(s.prochaine);
-        signaler('ok', midi, 'Bravo !');
+        signaler('ok', attendue.midi, 'Bravo !');
       } else {
         s.erreurs++;
         signaler('erreur', midi, `Oups ! C'était ${nomNote(attendue.midi)}, pas ${nomNote(midi)}`);

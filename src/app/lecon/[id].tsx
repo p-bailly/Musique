@@ -13,13 +13,13 @@ import { BoutonMicro } from '@/components/BoutonMicro';
 import { Clavier } from '@/components/Clavier';
 import { NotesQuiTombent } from '@/components/NotesQuiTombent';
 import { NotePortee, Portee } from '@/components/Portee';
-import { Bouton, Carte, Etoiles } from '@/components/ui';
+import { Bouton, Carte, Choix, Etoiles } from '@/components/ui';
 import { leconSuivante, trouverLecon } from '@/data/lecons';
 import { useMicro } from '@/hooks/useMicro';
 import { Bilan, useMoteurJeu } from '@/hooks/useMoteurJeu';
 import { nomDuree, nomNote } from '@/music/notes';
 import { calculerEtoiles, useProgression } from '@/store/Progression';
-import { useReglages } from '@/store/Reglages';
+import { Entree, useReglages } from '@/store/Reglages';
 import { revenir } from '@/utils/navigation';
 
 export default function EcranLecon() {
@@ -39,7 +39,9 @@ export default function EcranLecon() {
 
 function Jeu({ leconId }: { leconId: string }) {
   const lecon = trouverLecon(leconId)!;
-  const { reglages, couleurs: c } = useReglages();
+  const { reglages, modifier, couleurs: c } = useReglages();
+  /** L'élève joue sur son vrai piano (écouté au micro) plutôt que sur l'écran. */
+  const surPiano = reglages.entree === 'piano';
   const { enregistrerPartie, progression } = useProgression();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -74,6 +76,12 @@ function Jeu({ leconId }: { leconId: string }) {
   useEffect(() => {
     prechargerSons(lecon.clavierMin, lecon.clavierMax);
   }, [lecon]);
+
+  // Sur un vrai piano, le micro s'allume tout seul à l'ouverture de la leçon
+  const demarrerMicro = micro.demarrer;
+  useEffect(() => {
+    if (surPiano) demarrerMicro();
+  }, [surPiano, demarrerMicro]);
 
   // Appui sur le clavier à l'écran
   const son = reglages.son;
@@ -135,7 +143,8 @@ function Jeu({ leconId }: { leconId: string }) {
     couleurMessage = moteur.retour.type === 'ok' ? c.succes : c.erreur;
   }
   if (enJeu && moteur.enAttente && attendue && moteur.retour?.type !== 'erreur') {
-    message = reglages.nomsNotes ? `À toi : ${nomNote(attendue.midi)} !` : 'À toi ! Quelle est cette note ?';
+    const ou = surPiano ? ' sur ton piano' : '';
+    message = reglages.nomsNotes ? `Joue ${nomNote(attendue.midi)}${ou} !` : `À toi${ou} ! Quelle est cette note ?`;
     couleurMessage = c.primaire;
   }
 
@@ -229,6 +238,7 @@ function Jeu({ leconId }: { leconId: string }) {
         surbrillance={enJeu ? attendue?.midi : null}
         retour={moteur.retour}
         afficherNoms={reglages.nomsNotes}
+        interactif={!surPiano}
       />
 
       {/* ---------- Écrans superposés : départ, pause, résultat ---------- */}
@@ -242,6 +252,24 @@ function Jeu({ leconId }: { leconId: string }) {
             {modeAttente ? ' · le morceau t’attend' : ' · joue en rythme !'}
           </Text>
           <Legende />
+          <Text style={[styles.petit, { color: c.texte, fontWeight: '700' }]}>Je joue :</Text>
+          <Choix<Entree>
+            options={[
+              { valeur: 'piano', libelle: '🎹 sur mon piano' },
+              { valeur: 'ecran', libelle: '📱 sur l’écran' },
+            ]}
+            valeur={reglages.entree}
+            onChange={(v) => modifier({ entree: v })}
+          />
+          {surPiano && (
+            <Text style={[styles.petit, { color: micro.etat === 'actif' ? c.succes : c.texteDiscret }]}>
+              {micro.etat === 'actif'
+                ? '🎤 Micro prêt ! Pose le téléphone sur le pupitre et joue sur ton piano. Le clavier de l’écran te montre seulement où poser les doigts.'
+                : micro.etat === 'refuse' || micro.etat === 'erreur'
+                  ? '🎤 Le micro n’est pas disponible : autorise-le dans les réglages du téléphone, puis touche « Micro ».'
+                  : '🎤 Activation du micro…'}
+            </Text>
+          )}
           <View style={styles.boutons}>
             <Bouton titre="▶ Commencer" onPress={moteur.demarrer} />
             <Bouton titre="Retour" variante="secondaire" onPress={() => revenir()} />

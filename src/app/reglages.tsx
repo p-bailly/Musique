@@ -6,7 +6,7 @@ import React from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { Bouton, Carte, Choix } from '@/components/ui';
 import { useProgression } from '@/store/Progression';
-import { ChoixTheme, useCouleurs, useReglages } from '@/store/Reglages';
+import { ChoixTheme, Entree, useCouleurs, useReglages } from '@/store/Reglages';
 
 /** Ligne avec un titre, une explication et un interrupteur. */
 function Interrupteur({
@@ -45,6 +45,22 @@ export default function EcranReglages() {
   return (
     <ScrollView contentContainerStyle={styles.contenu}>
       <Carte style={styles.bloc}>
+        <Text style={[styles.titre, { color: c.texte }]}>🎹 Je joue…</Text>
+        <Choix<Entree>
+          options={[
+            { valeur: 'piano', libelle: '🎹 Sur mon piano (micro)' },
+            { valeur: 'ecran', libelle: '📱 Sur l’écran' },
+          ]}
+          valeur={reglages.entree}
+          onChange={(v) => modifier({ entree: v })}
+        />
+        <Text style={{ color: c.texteDiscret, fontSize: 14 }}>
+          Sur ton piano, le micro s’allume tout seul dans les leçons et le clavier de l’écran sert seulement de guide
+          pour savoir où poser les doigts.
+        </Text>
+      </Carte>
+
+      <Carte style={styles.bloc}>
         <Text style={[styles.titre, { color: c.texte }]}>🐢 Vitesse des notes 🐇</Text>
         <Choix
           options={[
@@ -74,7 +90,7 @@ export default function EcranReglages() {
         />
         <Interrupteur
           titre="🔊 Son du clavier"
-          detail="Jouer le son du piano quand tu touches le clavier à l'écran."
+          detail="Jouer le son du piano quand tu touches le clavier à l'écran (mode « sur l’écran »)."
           valeur={reglages.son}
           onChange={(v) => modifier({ son: v })}
         />
@@ -102,7 +118,7 @@ export default function EcranReglages() {
       <Carte style={styles.bloc}>
         <Text style={[styles.titre, { color: c.texte }]}>🎤 Jouer sur un vrai piano</Text>
         <Text style={{ color: c.texteDiscret, fontSize: 15, lineHeight: 21 }}>
-          Dans une leçon, touche le bouton « Micro » et pose le téléphone près du piano. Joue une note à la fois, dans
+          Pose le téléphone sur le pupitre de ton piano : le micro s’allume tout seul (le bouton « Micro » permet de le couper). Joue une note à la fois, dans
           une pièce calme. L’octave n’est pas vérifiée au micro (seul le nom de la note compte).
         </Text>
       </Carte>

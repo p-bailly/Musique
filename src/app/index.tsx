@@ -87,8 +87,8 @@ export default function Accueil() {
           </View>
         ))}
         <Text style={[styles.pied, { color: c.texteDiscret }]}>
-          Astuce : tourne ton téléphone à l’horizontale pour jouer. Tu peux utiliser le clavier à l’écran ou ton vrai
-          piano grâce au micro 🎤.
+          Astuce : pose ton téléphone à l’horizontale sur le pupitre et joue sur ton piano, le micro 🎤 t’écoute. Tu
+          peux aussi jouer sur l’écran (Réglages).
         </Text>
       </ScrollView>
     </SafeAreaView>

@@ -20,9 +20,14 @@ interface Props {
   /** Dernier retour (juste / faux) à afficher sur une touche. */
   retour?: { midi: number; type: 'ok' | 'erreur'; id: number } | null;
   afficherNoms: boolean;
+  /**
+   * Faux quand l'élève joue sur son vrai piano : le clavier sert alors de
+   * guide visuel (où poser les doigts) et ne réagit pas au toucher.
+   */
+  interactif?: boolean;
 }
 
-function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour, afficherNoms }: Props) {
+function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour, afficherNoms, interactif = true }: Props) {
   const c = useCouleurs();
   const touches = useMemo(() => geometrieClavier(min, max, largeur), [min, max, largeur]);
   const [enfoncees, setEnfoncees] = useState<Set<number>>(new Set());
@@ -61,7 +66,7 @@ function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour
   const tailleTexte = Math.max(10, Math.min(16, (largeur / blanches.length) * 0.32));
 
   return (
-    <View style={{ width: largeur, height: hauteur }}>
+    <View style={{ width: largeur, height: hauteur }} pointerEvents={interactif ? 'auto' : 'none'}>
       {blanches.map((m) => {
         const t = touches.get(m)!;
         return (
