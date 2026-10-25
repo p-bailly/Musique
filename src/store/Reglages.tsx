@@ -25,6 +25,10 @@ export interface Reglages {
   theme: ChoixTheme;
   /** Accès libre à toutes les leçons, sans devoir débloquer. */
   toutDebloquer: boolean;
+  /** Clics du métronome pendant le morceau. */
+  metronome: boolean;
+  /** Clics pendant la mesure de décompte, avant la première note. */
+  decompteAudible: boolean;
 }
 
 export const REGLAGES_DEFAUT: Reglages = {
@@ -35,6 +39,8 @@ export const REGLAGES_DEFAUT: Reglages = {
   son: true,
   theme: 'systeme',
   toutDebloquer: false,
+  metronome: false,
+  decompteAudible: true,
 };
 
 const CLE = 'reglages-v1';

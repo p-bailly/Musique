@@ -96,6 +96,18 @@ export default function EcranReglages() {
           onChange={(v) => modifier({ son: v })}
         />
         <Interrupteur
+          titre="Métronome"
+          detail="Un clic à chaque temps pendant le morceau (plus aigu sur le premier temps de la mesure)."
+          valeur={reglages.metronome}
+          onChange={(v) => modifier({ metronome: v })}
+        />
+        <Interrupteur
+          titre="Décompte audible"
+          detail="Une mesure de clics avant la première note, pour prendre le tempo."
+          valeur={reglages.decompteAudible}
+          onChange={(v) => modifier({ decompteAudible: v })}
+        />
+        <Interrupteur
           titre="Toutes les leçons"
           detail="Accéder à toutes les leçons sans devoir les débloquer dans l'ordre."
           valeur={reglages.toutDebloquer}
@@ -125,6 +137,10 @@ export default function EcranReglages() {
       </Carte>
 
       <Bouton titre="Effacer ma progression" variante="danger" onPress={confirmerRemiseAZero} />
+
+      <Text style={{ color: c.texteDiscret, fontSize: 13, textAlign: 'center' }}>
+        Sons de piano : Salamander Grand Piano V3, par Alexander Holm (licence CC BY 3.0).
+      </Text>
     </ScrollView>
   );
 }

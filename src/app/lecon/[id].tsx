@@ -5,11 +5,11 @@
  *  - en bas : le clavier virtuel.
  */
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { jouerNote, prechargerSons } from '@/audio/piano';
+import { jouerClic, jouerNote, prechargerSons } from '@/audio/piano';
 import { BoutonMicro } from '@/components/BoutonMicro';
 import { Clavier } from '@/components/Clavier';
 import { Icone, NomIcone } from '@/components/Icones';
@@ -69,11 +69,27 @@ function Jeu({ leconId }: { leconId: string }) {
     [lecon.id, modeAttente, enregistrerPartie],
   );
 
-  const moteur = useMoteurJeu({ lecon, vitesse: reglages.vitesse, modeAttente, onFin });
+  // Métronome : clics pendant le décompte et, si on veut, pendant le morceau
+  const [metronome, setMetronome] = useState(reglages.metronome);
+  const ignorerMicroRef = useRef<(ms?: number) => void>(() => {});
+  const onBattement = useCallback(
+    (numero: number, fort: boolean) => {
+      if (numero < 0 ? reglages.decompteAudible : metronome) {
+        jouerClic(fort);
+        ignorerMicroRef.current(150); // ne pas « entendre » le clic au micro
+      }
+    },
+    [metronome, reglages.decompteAudible],
+  );
+
+  const moteur = useMoteurJeu({ lecon, vitesse: reglages.vitesse, modeAttente, onFin, onBattement });
 
   // Le micro transmet les notes détectées au moteur de jeu
   const jouer = moteur.jouer;
   const micro = useMicro({ onNote: (midi) => jouer(midi, 'micro') });
+  useEffect(() => {
+    ignorerMicroRef.current = micro.ignorerUnInstant;
+  }, [micro.ignorerUnInstant]);
 
   useEffect(() => {
     prechargerSons(lecon.clavierMin, lecon.clavierMax);
@@ -216,6 +232,16 @@ function Jeu({ leconId }: { leconId: string }) {
           >
             <Text style={{ color: modeAttente ? c.surPrimaire : c.texte, fontWeight: '700' }}>
               Attente : {modeAttente ? 'oui' : 'non'}
+            </Text>
+          </Pressable>
+          <Pressable
+            onPress={() => setMetronome((m) => !m)}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: metronome }}
+            style={[styles.pastille, { backgroundColor: metronome ? c.primaire : c.surfaceAlt }]}
+          >
+            <Text style={{ color: metronome ? c.surPrimaire : c.texte, fontWeight: '700' }}>
+              Métronome : {metronome ? 'oui' : 'non'}
             </Text>
           </Pressable>
         </View>
