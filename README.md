@@ -62,9 +62,12 @@ d'entreprise, partage de connexion…) : `npx expo start --tunnel`.
 dans la dernière release du dépôt. Lien direct, à ouvrir depuis le téléphone :
 <https://github.com/p-bailly/Musique/releases/latest/download/SolfegePiano.apk>
 
-- L'APK est toujours signé avec la même clé personnelle (`keystore/solfege-piano.jks`, versionnée exprès, usage
-  perso uniquement) et son numéro de version augmente à chaque build : chaque nouvelle version s'installe
-  par-dessus la précédente, sans perdre la progression.
+- L'APK est toujours signé avec la même clé personnelle, fournie par deux **secrets du dépôt** (Settings ›
+  Secrets and variables › Actions) : `SOLFEGE_KEYSTORE_BASE64` (le keystore PKCS12, alias `solfege`, encodé en
+  base64) et `SOLFEGE_KEYSTORE_PASSWORD`. Gardez une copie de ce keystore : sans lui, impossible de publier une
+  mise à jour installable par-dessus.
+- Le numéro de version augmente à chaque build : chaque nouvelle version s'installe par-dessus la précédente,
+  sans perdre la progression.
 - Pour que l'appli apparaisse dans « Mes applis » (dépôt Managing-Apps), ajouter dans `TrackedApps.kt` :
   `TrackedApp("Solfège Piano", "p-bailly/Musique", "fr.solfegepiano.app", "SolfegePiano.apk"),`
 

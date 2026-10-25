@@ -1,6 +1,12 @@
 name: APK
 
-# À chaque push : vérifications puis compilation de l'APK signé (clé perso versionnée dans keystore/).
+# À chaque push : vérifications puis compilation de l'APK signé avec la clé perso.
+#
+# Secrets du dépôt nécessaires (Settings › Secrets and variables › Actions) :
+#   SOLFEGE_KEYSTORE_BASE64    keystore PKCS12 (alias « solfege ») encodé en base64
+#   SOLFEGE_KEYSTORE_PASSWORD  son mot de passe
+# Toujours la même clé : Android refuse une mise à jour signée avec une autre clé.
+#
 # Publication dans une release « apk-<numéro> » marquée comme la dernière, uniquement depuis la branche par
 # défaut du dépôt (les autres branches gardent l'APK en artefact). La nouvelle release est créée avant de
 # retirer les anciennes : il y a toujours un SolfegePiano.apk à télécharger (c'est ce que lit « Mes applis »).
@@ -35,6 +41,18 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
+      - name: Clé de signature
+        env:
+          KEYSTORE_BASE64: ${{ secrets.SOLFEGE_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.SOLFEGE_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ] || [ -z "$KEYSTORE_PASSWORD" ]; then
+            echo "::error::Secrets SOLFEGE_KEYSTORE_BASE64 et SOLFEGE_KEYSTORE_PASSWORD manquants (voir le README)"
+            exit 1
+          fi
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/solfege-piano.jks"
+          echo "SOLFEGE_KEYSTORE_FILE=$RUNNER_TEMP/solfege-piano.jks" >> "$GITHUB_ENV"
+
       - name: Dépendances et vérifications
         run: |
           npm ci
@@ -50,6 +68,7 @@ jobs:
         working-directory: android
         env:
           NODE_ENV: production
+          SOLFEGE_KEYSTORE_PASSWORD: ${{ secrets.SOLFEGE_KEYSTORE_PASSWORD }}
         run: ./gradlew --no-daemon assembleRelease
 
       - name: Renommer l'APK
