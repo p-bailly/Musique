@@ -21,15 +21,15 @@ export function BoutonMicro({ etat, niveau, derniereNote, onPress }: Props) {
   const libelle =
     etat === 'actif'
       ? derniereNote !== null
-        ? `🎤 ${nomNote(derniereNote)}`
-        : '🎤 J’écoute…'
+        ? `Micro · ${nomNote(derniereNote)}`
+        : 'J’écoute…'
       : etat === 'demarrage'
-        ? '🎤 …'
+        ? 'Micro…'
         : etat === 'refuse'
-          ? '🎤 Refusé'
+          ? 'Micro refusé'
           : etat === 'erreur'
-            ? '🎤 Erreur'
-            : '🎤 Micro';
+            ? 'Erreur micro'
+            : 'Micro';
 
   return (
     <Pressable

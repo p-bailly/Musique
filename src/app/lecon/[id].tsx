@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { jouerNote, prechargerSons } from '@/audio/piano';
 import { BoutonMicro } from '@/components/BoutonMicro';
 import { Clavier } from '@/components/Clavier';
+import { Icone, NomIcone } from '@/components/Icones';
 import { NotesQuiTombent } from '@/components/NotesQuiTombent';
 import { NotePortee, Portee } from '@/components/Portee';
 import { Bouton, Carte, Choix, Etoiles } from '@/components/ui';
@@ -169,7 +170,7 @@ function Jeu({ leconId }: { leconId: string }) {
       <View style={[styles.bandeau, { height: hBandeau }]}>
         <View style={[styles.cote, { width: largeurCote }]}>
           <View style={styles.ligne}>
-            <BoutonRond libelle="←" onPress={() => revenir()} accessibilityLabel="Retour au menu" />
+            <BoutonRond icone="retour" onPress={() => revenir()} accessibilityLabel="Retour au menu" />
             <Text style={[styles.titre, { color: c.texte }]} numberOfLines={2}>
               {lecon.titre}
             </Text>
@@ -193,7 +194,7 @@ function Jeu({ leconId }: { leconId: string }) {
           <View style={styles.ligne}>
             <BoutonMicro etat={micro.etat} niveau={micro.niveau} derniereNote={micro.derniereNote} onPress={basculerMicro} />
             <BoutonRond
-              libelle={moteur.phase === 'pause' ? '▶' : '❚❚'}
+              icone={moteur.phase === 'pause' ? 'lecture' : 'pause'}
               onPress={moteur.basculerPause}
               accessibilityLabel="Pause"
               desactive={moteur.phase !== 'enCours' && moteur.phase !== 'pause'}
@@ -206,7 +207,7 @@ function Jeu({ leconId }: { leconId: string }) {
             style={[styles.pastille, { backgroundColor: modeAttente ? c.primaire : c.surfaceAlt }]}
           >
             <Text style={{ color: modeAttente ? c.surPrimaire : c.texte, fontWeight: '700' }}>
-              ⏳ Attente : {modeAttente ? 'oui' : 'non'}
+              Attente : {modeAttente ? 'oui' : 'non'}
             </Text>
           </Pressable>
         </View>
@@ -255,8 +256,8 @@ function Jeu({ leconId }: { leconId: string }) {
           <Text style={[styles.petit, { color: c.texte, fontWeight: '700' }]}>Je joue :</Text>
           <Choix<Entree>
             options={[
-              { valeur: 'piano', libelle: '🎹 sur mon piano' },
-              { valeur: 'ecran', libelle: '📱 sur l’écran' },
+              { valeur: 'piano', libelle: 'sur mon piano' },
+              { valeur: 'ecran', libelle: 'sur l’écran' },
             ]}
             valeur={reglages.entree}
             onChange={(v) => modifier({ entree: v })}
@@ -264,14 +265,14 @@ function Jeu({ leconId }: { leconId: string }) {
           {surPiano && (
             <Text style={[styles.petit, { color: micro.etat === 'actif' ? c.succes : c.texteDiscret }]}>
               {micro.etat === 'actif'
-                ? '🎤 Micro prêt ! Pose le téléphone sur le pupitre et joue sur ton piano. Le clavier de l’écran te montre seulement où poser les doigts.'
+                ? 'Micro prêt ! Pose le téléphone sur le pupitre et joue sur ton piano. Le clavier de l’écran te montre seulement où poser les doigts.'
                 : micro.etat === 'refuse' || micro.etat === 'erreur'
-                  ? '🎤 Le micro n’est pas disponible : autorise-le dans les réglages du téléphone, puis touche « Micro ».'
-                  : '🎤 Activation du micro…'}
+                  ? 'Le micro n’est pas disponible : autorise-le dans les réglages du téléphone, puis touche « Micro ».'
+                  : 'Activation du micro…'}
             </Text>
           )}
           <View style={styles.boutons}>
-            <Bouton titre="▶ Commencer" onPress={moteur.demarrer} />
+            <Bouton titre="Commencer" onPress={moteur.demarrer} />
             <Bouton titre="Retour" variante="secondaire" onPress={() => revenir()} />
           </View>
         </Superpose>
@@ -281,8 +282,8 @@ function Jeu({ leconId }: { leconId: string }) {
         <Superpose>
           <Text style={[styles.grandTitre, { color: c.texte }]}>Pause</Text>
           <View style={styles.boutons}>
-            <Bouton titre="▶ Reprendre" onPress={moteur.basculerPause} />
-            <Bouton titre="↺ Recommencer" variante="secondaire" onPress={moteur.demarrer} />
+            <Bouton titre="Reprendre" onPress={moteur.basculerPause} />
+            <Bouton titre="Recommencer" variante="secondaire" onPress={moteur.demarrer} />
             <Bouton titre="Quitter" variante="secondaire" onPress={() => revenir()} />
           </View>
         </Superpose>
@@ -292,24 +293,24 @@ function Jeu({ leconId }: { leconId: string }) {
         <Superpose>
           <Text style={[styles.grandTitre, { color: c.texte }]}>
             {resultat.etoiles === 3
-              ? 'Parfait ! 🎉'
+              ? 'Parfait !'
               : resultat.etoiles === 2
-                ? 'Très bien ! 👏'
+                ? 'Très bien !'
                 : resultat.etoiles === 1
-                  ? 'Bien joué ! 🙂'
-                  : 'Continue, tu vas y arriver ! 💪'}
+                  ? 'Bien joué !'
+                  : 'Continue, tu vas y arriver !'}
           </Text>
           <Etoiles nombre={resultat.etoiles} taille={44} />
           <Text style={[styles.texte, { color: c.texte }]}>
-            Précision : {Math.round(resultat.precision * 100)} % · ✅ {pluriel(resultat.reussies, 'réussie')} · ❌{' '}
+            Précision : {Math.round(resultat.precision * 100)} % · {pluriel(resultat.reussies, 'réussie')} ·{' '}
             {pluriel(resultat.erreurs, 'erreur')}
-            {resultat.manquees ? ` · ⏭ ${pluriel(resultat.manquees, 'manquée')}` : ''}
+            {resultat.manquees ? ` · ${pluriel(resultat.manquees, 'manquée')}` : ''}
           </Text>
           <View style={styles.boutons}>
-            <Bouton titre="↺ Rejouer" variante="secondaire" onPress={moteur.demarrer} />
+            <Bouton titre="Rejouer" variante="secondaire" onPress={moteur.demarrer} />
             {suivante && (
               <Bouton
-                titre="Leçon suivante ➜"
+                titre="Leçon suivante"
                 desactive={!suivanteOuverte}
                 onPress={() => router.replace(`/lecon/${suivante.id}`)}
               />
@@ -349,12 +350,12 @@ function Legende() {
 }
 
 function BoutonRond({
-  libelle,
+  icone,
   onPress,
   accessibilityLabel,
   desactive,
 }: {
-  libelle: string;
+  icone: NomIcone;
   onPress: () => void;
   accessibilityLabel: string;
   desactive?: boolean;
@@ -371,7 +372,7 @@ function BoutonRond({
         { backgroundColor: c.surfaceAlt, borderColor: c.bordure, opacity: desactive ? 0.4 : pressed ? 0.7 : 1 },
       ]}
     >
-      <Text style={{ fontSize: 20, fontWeight: '900', color: c.texte }}>{libelle}</Text>
+      <Icone nom={icone} couleur={c.texte} />
     </Pressable>
   );
 }

@@ -4,6 +4,7 @@
  */
 import React from 'react';
 import { Pressable, StyleProp, StyleSheet, Text, View, ViewStyle } from 'react-native';
+import { Icone } from '@/components/Icones';
 import { useCouleurs } from '@/store/Reglages';
 
 interface BoutonProps {
@@ -45,9 +46,7 @@ export function Etoiles({ nombre, taille = 18 }: { nombre: number; taille?: numb
   return (
     <View style={styles.etoiles} accessibilityLabel={`${nombre} étoile${nombre > 1 ? 's' : ''} sur 3`}>
       {[1, 2, 3].map((i) => (
-        <Text key={i} style={{ fontSize: taille, color: i <= nombre ? c.etoile : c.bordure }}>
-          ★
-        </Text>
+        <Icone key={i} nom="etoile" taille={taille} couleur={i <= nombre ? c.etoile : c.bordure} />
       ))}
     </View>
   );
