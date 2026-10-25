@@ -1,0 +1,7 @@
+{
+  "name": "clavier-midi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Clavier MIDI USB et Bluetooth (Android) pour Solfège Piano",
+  "main": "index.ts"
+}

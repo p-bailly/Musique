@@ -21,6 +21,7 @@ import { useMicro } from '@/hooks/useMicro';
 import { Bilan, useMoteurJeu } from '@/hooks/useMoteurJeu';
 import { nomDuree, nomEcrit } from '@/music/notes';
 import { calculerEtoiles, useProgression } from '@/store/Progression';
+import { useMidi, useNotesMidi } from '@/store/Midi';
 import { Entree, useReglages } from '@/store/Reglages';
 import { revenir } from '@/utils/navigation';
 
@@ -43,7 +44,10 @@ function Jeu({ leconId }: { leconId: string }) {
   const lecon = trouverLecon(leconId)!;
   const { reglages, modifier, couleurs: c } = useReglages();
   /** L'élève joue sur son vrai piano (écouté au micro) plutôt que sur l'écran. */
-  const surPiano = reglages.entree === 'piano';
+  const midi = useMidi();
+  // Un clavier MIDI connecté remplace le micro : détection parfaite, accords compris
+  const surPiano = reglages.entree === 'piano' || !!midi.connecte;
+  const auMicro = reglages.entree === 'piano' && !midi.connecte;
   const { enregistrerPartie, progression } = useProgression();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -98,8 +102,9 @@ function Jeu({ leconId }: { leconId: string }) {
   // Sur un vrai piano, le micro s'allume tout seul à l'ouverture de la leçon
   const demarrerMicro = micro.demarrer;
   useEffect(() => {
-    if (surPiano) demarrerMicro();
-  }, [surPiano, demarrerMicro]);
+    if (auMicro) demarrerMicro();
+  }, [auMicro, demarrerMicro]);
+  useNotesMidi((m) => jouer(m, 'midi'));
 
   // Appui sur le clavier à l'écran
   const son = reglages.son;
@@ -216,7 +221,13 @@ function Jeu({ leconId }: { leconId: string }) {
 
         <View style={[styles.cote, styles.coteDroit, { width: largeurCote }]}>
           <View style={styles.ligne}>
-            <BoutonMicro etat={micro.etat} niveau={micro.niveau} derniereNote={micro.derniereNote} onPress={basculerMicro} />
+            <BoutonMicro
+              etat={micro.etat}
+              niveau={micro.niveau}
+              derniereNote={micro.derniereNote}
+              onPress={basculerMicro}
+              midi={midi.connecte}
+            />
             <BoutonRond
               icone={moteur.phase === 'pause' ? 'lecture' : 'pause'}
               onPress={moteur.basculerPause}
@@ -303,7 +314,7 @@ function Jeu({ leconId }: { leconId: string }) {
             valeur={reglages.entree}
             onChange={(v) => modifier({ entree: v })}
           />
-          {surPiano && (
+          {auMicro && (
             <Text style={[styles.petit, { color: micro.etat === 'actif' ? c.succes : c.texteDiscret }]}>
               {micro.etat === 'actif'
                 ? 'Micro prêt ! Pose le téléphone sur le pupitre et joue sur ton piano. Le clavier de l’écran te montre seulement où poser les doigts.'

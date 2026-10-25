@@ -14,6 +14,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { MidiProvider } from '@/store/Midi';
 import { ProgressionProvider } from '@/store/Progression';
 import { ReglagesProvider, useReglages } from '@/store/Reglages';
 
@@ -64,7 +65,9 @@ export default function Racine() {
     <SafeAreaProvider>
       <ReglagesProvider>
         <ProgressionProvider>
-          <Navigation />
+          <MidiProvider>
+            <Navigation />
+          </MidiProvider>
         </ProgressionProvider>
       </ReglagesProvider>
     </SafeAreaProvider>

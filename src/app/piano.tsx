@@ -13,6 +13,7 @@ import { Icone } from '@/components/Icones';
 import { elementsSimples, Portee } from '@/components/Portee';
 import { useMicro } from '@/hooks/useMicro';
 import { Cle, DO_CENTRAL, ecrireMidi, nomEcrit } from '@/music/notes';
+import { useMidi, useNotesMidi } from '@/store/Midi';
 import { useReglages } from '@/store/Reglages';
 import { couleurNote } from '@/theme/couleurs';
 import { revenir } from '@/utils/navigation';
@@ -37,14 +38,17 @@ export default function PianoLibre() {
     setDebut((d) => (midi >= d && midi <= d + 24 ? d : DEBUTS.reduce((a, b) => (Math.abs(midi - 12 - b) < Math.abs(midi - 12 - a) ? b : a))));
   }, []);
 
-  const surPiano = reglages.entree === 'piano';
+  const midi = useMidi();
+  const surPiano = reglages.entree === 'piano' || !!midi.connecte;
+  const auMicro = reglages.entree === 'piano' && !midi.connecte;
   const micro = useMicro({ onNote: ajouter });
 
   // Sur un vrai piano, le micro s'allume tout seul
   const demarrerMicro = micro.demarrer;
   useEffect(() => {
-    if (surPiano) demarrerMicro();
-  }, [surPiano, demarrerMicro]);
+    if (auMicro) demarrerMicro();
+  }, [auMicro, demarrerMicro]);
+  useNotesMidi(ajouter);
   const ignorerMicro = micro.ignorerUnInstant;
   const son = reglages.son;
 
@@ -87,7 +91,7 @@ export default function PianoLibre() {
           >
             <Icone nom="retour" couleur={c.texte} />
           </Pressable>
-          <BoutonMicro etat={micro.etat} niveau={micro.niveau} derniereNote={micro.derniereNote} onPress={() => (micro.etat === 'actif' ? micro.arreter() : micro.demarrer())} />
+          <BoutonMicro etat={micro.etat} niveau={micro.niveau} derniereNote={micro.derniereNote} onPress={() => (micro.etat === 'actif' ? micro.arreter() : micro.demarrer())} midi={midi.connecte} />
           <View style={styles.octaves}>
             {DEBUTS.map((d) => (
               <Pressable

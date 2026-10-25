@@ -4,9 +4,10 @@
  */
 import { router } from 'expo-router';
 import React from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { Bouton, Carte, Choix } from '@/components/ui';
+import { useMidi } from '@/store/Midi';
 import { useProgression } from '@/store/Progression';
 import { ChoixTheme, Entree, useCouleurs, useReglages } from '@/store/Reglages';
 
@@ -37,6 +38,7 @@ function Interrupteur({
 export default function EcranReglages() {
   const { reglages, modifier, couleurs: c } = useReglages();
   const { reinitialiser } = useProgression();
+  const midi = useMidi();
 
   const confirmerRemiseAZero = () =>
     Alert.alert('Effacer la progression ?', 'Toutes les étoiles et statistiques seront perdues.', [
@@ -60,6 +62,45 @@ export default function EcranReglages() {
           Sur ton piano, le micro s’allume tout seul dans les leçons et le clavier de l’écran sert seulement de guide
           pour savoir où poser les doigts.
         </Text>
+      </Carte>
+
+      <Carte style={styles.bloc}>
+        <Text style={[styles.titre, { color: c.texte }]}>Clavier MIDI</Text>
+        {!midi.disponible ? (
+          <Text style={{ color: c.texteDiscret, fontSize: 14 }}>
+            Pas de MIDI ici : il faut l’appli installée sur un téléphone Android (APK), pas Expo Go.
+          </Text>
+        ) : (
+          <>
+            <Text style={{ color: midi.connecte ? c.succes : c.texteDiscret, fontSize: 15, fontWeight: '700' }}>
+              {midi.connecte ? `Connecté : ${midi.connecte}` : 'Aucun clavier connecté'}
+            </Text>
+            <Text style={{ color: c.texteDiscret, fontSize: 14 }}>
+              Un clavier MIDI reconnaît chaque note sans erreur, accords compris. En USB (avec un adaptateur OTG), il se
+              connecte tout seul. En Bluetooth, cherche-le une fois ici : l’appli s’y reconnectera ensuite.
+            </Text>
+            {midi.appareils
+              .filter((a) => !a.connecte)
+              .map((a) => (
+                <Bouton key={a.id} titre={`Connecter ${a.nom}`} variante="secondaire" petit onPress={() => midi.connecter(a.id)} />
+              ))}
+            {Platform.OS === 'android' && (
+              <Bouton
+                titre={midi.rechercheEnCours ? 'Recherche…' : 'Chercher un clavier Bluetooth'}
+                variante="secondaire"
+                desactive={midi.rechercheEnCours}
+                onPress={midi.chercherBluetooth}
+              />
+            )}
+            {midi.bluetoothTrouves.map((a) => (
+              <Bouton key={a.adresse} titre={a.nom} petit onPress={() => midi.connecterBluetooth(a)} />
+            ))}
+            {midi.connecte && Platform.OS === 'android' && (
+              <Bouton titre="Déconnecter" variante="secondaire" petit onPress={midi.deconnecter} />
+            )}
+            {midi.erreur && <Text style={{ color: c.erreur, fontSize: 14 }}>{midi.erreur}</Text>}
+          </>
+        )}
       </Carte>
 
       <Carte style={styles.bloc}>
