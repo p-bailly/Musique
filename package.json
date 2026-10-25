@@ -27,6 +27,7 @@
     "@types/react": "~19.3.0",
     "eslint": "^9.39.5",
     "eslint-config-expo": "~58.0.4",
+    "tsx": "^4.23.15",
     "typescript": "~6.0.3"
   },
   "scripts": {
@@ -34,6 +35,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
+    "test": "tsx scripts/tests/lecons.test.ts && tsx scripts/tests/exercices.test.ts && tsx scripts/tests/polyphonie.test.ts",
     "sons": "node scripts/generate-sounds.js",
     "icones": "python3 scripts/generate-icons.py",
     "lint": "expo lint"

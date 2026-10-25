@@ -1,4 +1,4 @@
-# 🎹 Solfège Piano
+# Solfège Piano
 
 Application mobile (iOS et Android) pour **apprendre le solfège et le piano** quand on est grand débutant :
 lire les notes (Do, Ré, Mi, Fa, Sol, La, Si) sur la portée et **les jouer soi-même sur son vrai piano** :
@@ -7,31 +7,34 @@ de l'écran, au choix dans les réglages.)
 
 React Native + Expo (SDK 58) · TypeScript · 100 % hors-ligne · sans compte ni serveur.
 
-## Fonctionnalités (MVP)
+## Fonctionnalités
 
-- **Jeu sur votre vrai piano (mode par défaut)** : le micro s'allume tout seul au début de chaque leçon ; le clavier
-  affiché sert de guide (où poser les doigts) et ne réagit pas au toucher.
-- **Clavier virtuel** de 2 octaves (+ le Do final), avec le nom français de chaque touche et un repère sur le do
-  central ; il devient jouable au toucher en mode « sur l'écran ».
-- **Notes qui tombent** : les blocs descendent vers leur touche ; la touche à jouer est en surbrillance jaune.
-- **Mode attente** : le morceau s'arrête tant que la bonne touche n'est pas jouée. La touche s'allume en vert si c'est
-  juste, en rouge si c'est faux, avec un message (« Oups ! C'était Ré, pas Mi »).
-- **Détection des notes** : au toucher sur le clavier à l'écran, ou **au micro** (détection de hauteur YIN) pour
-  jouer sur un vrai piano.
-- **Portée** en clé de sol ou en clé de fa, avec la note à jouer en couleur et les suivantes. Figures de notes
-  selon la durée (ronde, blanche, noire, croche, notes pointées).
-- **Parcours de 21 leçons** sur 4 niveaux :
-  1. Do-Ré-Mi-Fa-Sol à la main droite
+- **Trois façons de jouer** : sur ton **vrai piano** écouté au micro (par défaut), sur un **clavier MIDI** USB ou
+  Bluetooth (détection parfaite, accords compris), ou sur le **clavier de l'écran**.
+- **Une couleur par note** (Do rouge, Ré orange, Mi jaune, Fa vert, Sol bleu, La violet, Si rose), la même partout :
+  portée, blocs qui tombent, touches, pastilles des leçons.
+- **Notes qui tombent** vers leur touche ; la touche à jouer s'allume à la couleur de sa note (toutes les touches
+  d'un accord). **Mode attente** : le morceau s'arrête tant que les bonnes notes ne sont pas jouées.
+- **Partition complète** : clé de sol, clé de fa ou **grande portée** (deux mains), armure, chiffrage, barres de
+  mesure, dièses, bémols et bécarres, silences dessinés, liaisons, nuances, doigtés au-dessus (main droite) ou
+  au-dessous (main gauche) des notes, accords.
+- **Micro polyphonique** : reconnaît plusieurs notes à la fois (accords, deux mains), avec un écran de
+  **calibration** (bruit de fond, sensibilité, essai en direct).
+- **Sons de piano** tirés du *Salamander Grand Piano* (licence libre), **métronome** et **décompte** d'une mesure.
+- **Parcours de 30 leçons** sur 6 niveaux :
+  1. Do-Ré-Mi-Fa-Sol à la main droite (avec les doigtés)
   2. Toute l'octave, puis la clé de fa (main gauche)
-  3. Le rythme : ronde, blanche, noire, croche (mode attente désactivé par défaut)
+  3. Le rythme : ronde, blanche, noire, croche
   4. Mélodies du domaine public : *Au clair de la lune*, *Frère Jacques*, *Ah ! vous dirai-je, maman*,
      *Ode à la joie*, *Hänschen klein*
-- **Progression** : 1 à 3 étoiles par leçon (selon la précision), leçons débloquées au fur et à mesure,
-  série de jours consécutifs 🔥, statistiques et graphique des 7 derniers jours.
-- **Réglages** : je joue sur mon piano / sur l'écran, vitesse (×0,5 à ×1,5), mode attente, noms des notes, son du clavier, thème clair/sombre/automatique,
-  accès à toutes les leçons, remise à zéro.
+  5. Dièses, bémols et armures : Fa#, Sib, gammes de Sol et de Fa majeur, une valse avec silences, liaisons et nuances
+  6. Les deux mains : grande portée, accords à la main gauche, *Au clair de la lune* et *Ode à la joie* à deux mains
+- **Exercices sans clavier** : **cartes flash** chronométrées (« quelle est cette note ? », clé de sol, de fa ou les
+  deux) et **dictée musicale** (reconnaître une note à l'oreille), avec records.
+- **Progression** : 1 à 3 étoiles par leçon, leçons débloquées au fur et à mesure, série de jours consécutifs,
+  statistiques et graphique des 7 derniers jours.
 - **Piano libre** : on joue ce qu'on veut, l'appli affiche le nom de la note et sa place sur la portée.
-- Écrans de jeu en **paysage**, grands boutons, thème clair et sombre.
+- Écrans de jeu en **paysage**, thème clair et sombre.
 
 ## Lancer l'application sur votre téléphone avec Expo Go
 
@@ -109,7 +112,8 @@ identifiant Apple gratuit (elle doit alors être réinstallée tous les 7 jours)
 | `npx expo start` | Lance le serveur de développement (QR code pour Expo Go) |
 | `npm run typecheck` | Vérification TypeScript |
 | `npm run lint` | Analyse du code (ESLint) |
-| `npm run sons` | Régénère les sons de piano (`assets/sounds/`) |
+| `npm test` | Tests : compilateur de leçons, détection polyphonique (sur les sons de piano), exercices |
+| `npm run sons` | Régénère les sons de piano et du métronome (`assets/sounds/`, nécessite ffmpeg) |
 | `npm run icones` | Régénère les icônes (Python + Pillow) |
 
 ## Structure du projet
@@ -117,27 +121,31 @@ identifiant Apple gratuit (elle doit alors être réinstallée tous les 7 jours)
 ```
 src/
   app/                    Écrans (Expo Router : un fichier = un écran)
-    _layout.tsx           Navigation + fournisseurs (réglages, progression)
+    _layout.tsx           Navigation, police, fournisseurs (réglages, progression, MIDI)
     index.tsx             Accueil : niveaux et leçons
     lecon/[id].tsx        Écran de jeu (notes qui tombent, portée, clavier)
     piano.tsx             Piano libre
+    exercices/            Cartes flash et dictée musicale
+    calibration.tsx       Calibration du micro
     stats.tsx             Progression et statistiques
-    reglages.tsx          Réglages
-  components/             Clavier, NotesQuiTombent, Portee (SVG), BoutonMicro, ui…
+    reglages.tsx          Réglages (dont le clavier MIDI)
+  components/             Clavier, NotesQuiTombent, Portee (partition SVG), BoutonMicro, ui…
   hooks/
-    useMoteurJeu.ts       Moteur du jeu (temps, mode attente, réussites/erreurs)
+    useMoteurJeu.ts       Moteur du jeu (temps, accords, mode attente, métronome)
     useMicro.ts           Micro → détection des notes
   music/
-    notes.ts              Noms français, MIDI, position sur la portée
-    pitch.ts              Détection de hauteur (algorithme YIN)
-  audio/                  Lecture des sons de piano
+    notes.ts              Noms français, notes écrites (dièses, bémols), armures, portée
+    polyphonie.ts         Détection polyphonique (FFT + saillance harmonique)
+    exercices.ts          Tirage des cartes flash et de la dictée
+  audio/                  Sons de piano et du métronome
   data/
-    lecons.ts             Chargement et préparation des leçons
-    niveaux/niveauN.json  Les leçons (une par objet JSON)
-  store/                  Réglages et progression (sauvegarde locale AsyncStorage)
-  theme/couleurs.ts       Thèmes clair et sombre
-assets/sounds/            Sons de piano synthétisés (WAV, générés par scripts/generate-sounds.js)
-scripts/                  Générateurs des sons et des icônes
+    lecons.ts             Compilation des leçons (accords, liaisons, deux mains)
+    niveaux/niveauN.json  Les leçons
+  store/                  Réglages, progression, clavier MIDI
+  theme/couleurs.ts       Thèmes clair et sombre, couleurs des notes
+modules/clavier-midi/     Module natif Android (Kotlin) : claviers MIDI USB et Bluetooth
+assets/sounds/            Sons de piano (Salamander) et clics du métronome
+scripts/                  Générateurs des sons et des icônes, tests (scripts/tests)
 ```
 
 ## Ajouter une leçon
@@ -152,52 +160,60 @@ Ouvrez `src/data/niveaux/niveauN.json` et ajoutez un objet dans `lecons` :
   "cle": "sol",
   "tempo": 90,
   "main": "droite",
+  "armure": -1,
+  "mesure": "3/4",
   "notes": [
-    { "note": "Do4", "duree": 1 },
-    { "note": "Ré4", "duree": 0.5 },
+    { "note": "Fa4", "duree": 1, "doigt": 1, "nuance": "p" },
+    { "note": "Sib4", "duree": 0.5, "doigt": 4 },
     { "note": "silence", "duree": 0.5 },
-    { "note": "Mi4", "duree": 2, "main": "gauche" }
+    { "note": "Do5", "duree": 2, "lie": true },
+    { "note": "Do5", "duree": 1 },
+    { "note": "Fa4+La4+Do5", "duree": 3, "doigt": [1, 3, 5], "nuance": "f" }
   ]
 }
 ```
 
-- `note` : nom français + octave (`Do4` = **do central**, `Ré#4`, `Sib3`…) ou `"silence"`.
-  Attention : on suit la notation internationale ; en France on appelle souvent le do central « Do3 ».
+- `note` : nom français + octave (`Do4` = **do central**, `Fa#4`, `Sib3`…), un accord (`Do4+Mi4+Sol4`) ou
+  `"silence"`. Attention : on suit la notation internationale ; en France on appelle souvent le do central « Do3 ».
 - `duree` en temps : `4` ronde, `3` blanche pointée, `2` blanche, `1.5` noire pointée, `1` noire, `0.5` croche.
-- `cle` : `"sol"` ou `"fa"` · `main` : `"droite"` ou `"gauche"` (modifiable note par note).
+- `cle` : `"sol"`, `"fa"` ou `"double"` (grande portée) · `main` : `"droite"` ou `"gauche"` (modifiable note par note).
+- `armure` (facultatif) : nombre de dièses (positif) ou de bémols (négatif). Écrivez quand même `Fa#5` ou `Sib4` :
+  la partition n'affiche l'altération que si elle diffère de l'armure.
+- `mesure` (facultatif) : `"4/4"` par défaut, ou `"3/4"`, `"2/4"`…
+- `doigt` (1 = pouce … 5 = auriculaire, une liste pour un accord), `nuance` (`pp`, `p`, `mp`, `mf`, `f`, `ff`),
+  `lie` (la note suivante de même hauteur prolonge celle-ci, sans être rejouée) : facultatifs.
+- **Deux mains** : remplacez `notes` par `voix`, une liste de voix jouées en même temps, chacune avec sa `main`
+  et ses `notes` ; avec `"cle": "double"`, la main droite s'écrit en clé de sol, la gauche en clé de fa.
 - `attente` (facultatif) : `false` pour désactiver le mode attente par défaut (utile pour le rythme).
-- Le clavier affiché (2 octaves) est calculé automatiquement à partir des notes.
+- Le clavier affiché est calculé automatiquement à partir des notes.
 - Les `id` doivent être uniques ; l'ordre dans le fichier est l'ordre du parcours.
 
-Pour un nouveau niveau : créez `niveau5.json` sur le même modèle et ajoutez-le à `SOURCES` dans
-`src/data/lecons.ts`.
+Pour un nouveau niveau : créez `niveau7.json` sur le même modèle et ajoutez-le à `SOURCES` dans
+`src/data/lecons.ts`. `npm test` vérifie que toutes les leçons se compilent.
 
 ## Bon à savoir
 
-- **Micro** : une note à la fois (pas d'accords), dans une pièce calme, téléphone posé près du piano. L'octave
-  n'est pas vérifiée au micro (seul le nom de la note compte), car la détection peut confondre deux octaves.
-  Quand vous touchez le clavier à l'écran, le micro est ignoré une demi-seconde pour ne pas « entendre » le
-  son de l'appli.
-- Les sons de piano sont **synthétisés** par `scripts/generate-sounds.js` : aucun fichier sous droits.
+- **Micro** : il reconnaît les accords et les deux mains, dans une pièce calme, téléphone posé sur le pupitre
+  (calibrez-le une fois dans les réglages). L'octave n'est pas vérifiée au micro (seul le nom de la note compte),
+  et une note qui tombe sur une harmonique d'une autre note de l'accord (son octave, sa douzième) est validée avec
+  elle : un micro ne peut pas les distinguer. Le micro ignore les sons joués par l'appli (clavier, métronome).
+- **Clavier MIDI** : uniquement dans l'APK Android (module natif `modules/clavier-midi`), pas dans Expo Go ni sur
+  iPhone. Un clavier USB (adaptateur OTG) se connecte tout seul ; un clavier Bluetooth se cherche une fois dans
+  les réglages. Sur le web (Chrome), Web MIDI est utilisé.
+- **Sons** : échantillons du *Salamander Grand Piano V3* d'Alexander Holm (licence
+  [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)), dans la version publiée par Tone.js ;
+  `npm run sons` les régénère.
 - Toutes les mélodies sont des airs traditionnels ou classiques du **domaine public**.
 - `npx expo start --web` ouvre une version navigateur, pratique pour développer (le micro et le rendu peuvent y
   différer du téléphone).
 
 ## Améliorations possibles
 
-1. **Clavier MIDI** (USB/Bluetooth) pour une détection parfaite et les accords (nécessite un build EAS, pas Expo Go).
-2. **Détection polyphonique** au micro (accords, deux mains en même temps) et calibration de la sensibilité.
-3. **Vrais échantillons de piano** (ex. Salamander Grand Piano, licence libre) et **métronome** audible avec décompte.
-4. **Exercices de lecture** sans clavier : cartes flash « quelle est cette note ? », chronométrées, et dictée
-   musicale (reconnaître une note à l'oreille).
-5. **Solfège plus complet** : dièses et bémols, armures, mesures et barres de mesure, silences dessinés,
-   liaisons, nuances, doigtés affichés au-dessus des notes.
-6. **Deux mains** : grande portée (clé de sol + clé de fa) et leçons main gauche + main droite simultanées.
-7. **Paroles** sous les notes pour les chansons, et écoute du morceau avant de le jouer (« démo »).
-8. **Plus de contenu** : import de fichiers MIDI/MusicXML du domaine public, éditeur de leçons dans l'appli.
-9. **Motivation** : objectif quotidien, rappels par notification locale, badges, courbe de progression par note
+1. **Paroles** sous les notes pour les chansons, et écoute du morceau avant de le jouer (« démo »).
+2. **Plus de contenu** : import de fichiers MIDI/MusicXML du domaine public, éditeur de leçons dans l'appli.
+3. **Motivation** : objectif quotidien, rappels par notification locale, badges, courbe de progression par note
    (repérer les notes les plus souvent ratées et les faire réviser).
-10. **Confort** : animations sur le fil natif (Reanimated), retour haptique, mode portrait pour tablette,
+4. **Confort** : animations sur le fil natif (Reanimated), retour haptique, mode portrait pour tablette,
     couleurs adaptées au daltonisme, taille de texte réglable.
-11. **Plusieurs profils** (famille) et export/sauvegarde de la progression.
-12. **Tests automatisés** (Jest) du moteur de jeu et de la détection de hauteur.
+5. **Plusieurs profils** (famille) et export/sauvegarde de la progression.
+6. **Tests du moteur de jeu** (accords, mode attente, mode libre) avec un faux temps.

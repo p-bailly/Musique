@@ -424,7 +424,7 @@ function Accord({
           // Main droite : au-dessus (et au-dessus de la hampe montante) ; main gauche : sous la portée,
           // à gauche d'une hampe descendante pour ne pas la croiser
           const base = doigtsEnBas
-            ? y(Math.min(pMin, 0) - 2.4)
+            ? y(Math.min(pMin, 0) - 3.2)
             : Math.min(y(Math.max(pMax, 8) + 2.2), versLeHaut ? yFinHampe - g * 0.4 : Infinity);
           const xd = doigtsEnBas && !versLeHaut && hampe ? x - rx - g * 0.6 : x;
           return liste.map((d, i) => (
