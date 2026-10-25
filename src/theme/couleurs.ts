@@ -87,9 +87,14 @@ const COULEURS_NOTES: { fond: string; texte: string }[] = [
 
 const DEGRE_PAR_DEMITON = [0, 0, 1, 1, 2, 3, 3, 4, 4, 5, 5, 6];
 
-/** Couleur d'une note MIDI (fond) et couleur lisible du texte posé dessus. */
+/** Couleur d'une note MIDI (fond) et couleur lisible du texte posé dessus (La# = couleur du La). */
 export function couleurNote(midi: number): { fond: string; texte: string } {
   return COULEURS_NOTES[DEGRE_PAR_DEMITON[((midi % 12) + 12) % 12]];
+}
+
+/** Couleur d'une note écrite, d'après son degré (Sib = couleur du Si). */
+export function couleurDegre(degre: number): { fond: string; texte: string } {
+  return COULEURS_NOTES[((degre % 7) + 7) % 7];
 }
 
 /** Les 7 couleurs dans l'ordre Do → Si (bandeau décoratif). */

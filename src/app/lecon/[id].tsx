@@ -5,7 +5,7 @@
  *  - en bas : le clavier virtuel.
  */
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,12 +14,12 @@ import { BoutonMicro } from '@/components/BoutonMicro';
 import { Clavier } from '@/components/Clavier';
 import { Icone, NomIcone } from '@/components/Icones';
 import { NotesQuiTombent } from '@/components/NotesQuiTombent';
-import { NotePortee, Portee } from '@/components/Portee';
+import { Portee, StatutTete } from '@/components/Portee';
 import { Bouton, Carte, Choix, Etoiles } from '@/components/ui';
 import { leconSuivante, trouverLecon } from '@/data/lecons';
 import { useMicro } from '@/hooks/useMicro';
 import { Bilan, useMoteurJeu } from '@/hooks/useMoteurJeu';
-import { nomDuree, nomNote } from '@/music/notes';
+import { nomDuree, nomEcrit } from '@/music/notes';
 import { calculerEtoiles, useProgression } from '@/store/Progression';
 import { Entree, useReglages } from '@/store/Reglages';
 import { revenir } from '@/utils/navigation';
@@ -112,31 +112,30 @@ function Jeu({ leconId }: { leconId: string }) {
   /* ----- Mise en page (paysage) ----- */
   const L = width - insets.left - insets.right;
   const H = height - insets.top - insets.bottom;
-  const hClavier = Math.round(H * 0.33);
-  const hBandeau = Math.round(Math.max(96, H * 0.3));
+  const hClavier = Math.round(H * (lecon.cle === 'double' ? 0.28 : 0.33));
+  // La grande portée (deux mains) a besoin de plus de hauteur
+  const hBandeau = Math.round(Math.max(96, H * (lecon.cle === 'double' ? 0.46 : 0.3)));
   const hChute = Math.max(60, H - hClavier - hBandeau);
   const tempsVisibles = Math.min(4, Math.max(2, hChute / 55));
   const largeurCote = Math.min(220, L * 0.24);
   const largeurPortee = L - largeurCote * 2 - 16;
 
-  // Notes affichées sur la portée : la précédente, l'actuelle et les suivantes
-  const notesPortee: NotePortee[] = useMemo(() => {
-    const debut = Math.max(0, moteur.prochaine - 1);
-    return lecon.notes.slice(debut, debut + 10).map((n) => ({
-      midi: n.midi,
-      duree: n.duree,
-      statut:
-        n.index === moteur.prochaine
-          ? 'actuelle'
-          : moteur.etats[n.index] === 'reussie'
-            ? 'passee'
-            : moteur.etats[n.index] === 'manquee'
-              ? 'erreur'
-              : 'futur',
-    }));
-  }, [lecon, moteur.prochaine, moteur.etats]);
+  // État de chaque note sur la portée
+  const { etats, groupe } = moteur;
+  const statut = useCallback(
+    (index: number): StatutTete =>
+      etats[index] === 'reussie'
+        ? 'passee'
+        : etats[index] === 'manquee'
+          ? 'erreur'
+          : lecon.notes[index]?.groupe === groupe
+            ? 'actuelle'
+            : 'futur',
+    [etats, groupe, lecon],
+  );
+  const tempsActuel = groupe < lecon.groupes.length ? lecon.groupes[groupe].debut : null;
 
-  const attendue = moteur.noteAttendue;
+  const attendues = moteur.attendues;
   const enJeu = moteur.phase === 'enCours';
   let message = '';
   let couleurMessage = c.texte;
@@ -144,9 +143,12 @@ function Jeu({ leconId }: { leconId: string }) {
     message = moteur.retour.message;
     couleurMessage = moteur.retour.type === 'ok' ? c.succes : c.erreur;
   }
-  if (enJeu && moteur.enAttente && attendue && moteur.retour?.type !== 'erreur') {
+  if (enJeu && moteur.enAttente && attendues.length && moteur.retour?.type !== 'erreur') {
     const ou = surPiano ? ' sur ton piano' : '';
-    message = reglages.nomsNotes ? `Joue ${nomNote(attendue.midi)}${ou} !` : `À toi${ou} ! Quelle est cette note ?`;
+    const noms = attendues.map((n) => nomEcrit(n)).join(' + ');
+    message = reglages.nomsNotes
+      ? `Joue ${noms}${ou} !`
+      : `À toi${ou} ! ${attendues.length > 1 ? 'Quelles sont ces notes ?' : 'Quelle est cette note ?'}`;
     couleurMessage = c.primaire;
   }
 
@@ -184,7 +186,12 @@ function Jeu({ leconId }: { leconId: string }) {
         <View style={[styles.portee, { backgroundColor: c.surface, borderColor: c.bordure }]}>
           <Portee
             cle={lecon.cle}
-            notes={notesPortee}
+            armure={lecon.armure}
+            mesure={lecon.mesure}
+            elements={lecon.partition}
+            tempsActuel={tempsActuel}
+            statut={statut}
+            dureeTotale={lecon.dureeTotale}
             largeur={largeurPortee}
             hauteur={hBandeau - 8}
             afficherNoms={reglages.nomsNotes}
@@ -219,7 +226,7 @@ function Jeu({ leconId }: { leconId: string }) {
         <NotesQuiTombent
           notes={lecon.notes}
           etats={moteur.etats}
-          prochaine={moteur.prochaine}
+          groupe={moteur.groupe}
           temps={moteur.temps}
           min={lecon.clavierMin}
           max={lecon.clavierMax}
@@ -228,6 +235,12 @@ function Jeu({ leconId }: { leconId: string }) {
           tempsVisibles={tempsVisibles}
           afficherNoms={reglages.nomsNotes}
         />
+        {/* Décompte : une mesure avant la première note */}
+        {enJeu && moteur.temps < 0 && (
+          <View style={styles.decompte} pointerEvents="none">
+            <Text style={[styles.chiffreDecompte, { color: c.texte }]}>{Math.ceil(-moteur.temps)}</Text>
+          </View>
+        )}
       </View>
 
       {/* ---------- Clavier ---------- */}
@@ -237,7 +250,7 @@ function Jeu({ leconId }: { leconId: string }) {
         largeur={L}
         hauteur={hClavier}
         onAppui={onAppui}
-        surbrillance={enJeu ? attendue?.midi : null}
+        surbrillance={enJeu ? attendues : []}
         retour={moteur.retour}
         afficherNoms={reglages.nomsNotes}
         interactif={!surPiano}
@@ -249,7 +262,8 @@ function Jeu({ leconId }: { leconId: string }) {
           <Text style={[styles.grandTitre, { color: c.texte }]}>{lecon.titre}</Text>
           <Text style={[styles.texte, { color: c.texte }]}>{lecon.description}</Text>
           <Text style={[styles.petit, { color: c.texteDiscret }]}>
-            {lecon.cle === 'sol' ? 'Clé de sol' : 'Clé de fa'} · main {lecon.main} · {lecon.notes.length} notes ·
+            {lecon.cle === 'double' ? 'Grande portée · deux mains' : `${lecon.cle === 'sol' ? 'Clé de sol' : 'Clé de fa'} · main ${lecon.main}`} ·{' '}
+            {lecon.mesure.temps}/{lecon.mesure.unite} · {lecon.notes.length} notes ·
             tempo {Math.round(lecon.tempo * reglages.vitesse)}
             {modeAttente ? ' · le morceau t’attend' : ' · joue en rythme !'}
           </Text>
@@ -379,6 +393,8 @@ function BoutonRond({
 }
 
 const styles = StyleSheet.create({
+  decompte: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  chiffreDecompte: { fontSize: 64, fontWeight: '900', opacity: 0.8 },
   ecran: { flex: 1 },
   centre: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 16 },
   centreH: { alignItems: 'center' },
@@ -394,6 +410,9 @@ const styles = StyleSheet.create({
   superpose: {
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.45)',
+    // Au-dessus des touches noires du clavier (qui ont elles-mêmes une élévation sur Android)
+    zIndex: 10,
+    elevation: 10,
   },
   superposeContenu: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
   carte: { maxWidth: 620, width: '100%', alignItems: 'center', gap: 10 },

@@ -91,3 +91,94 @@ export function nomDuree(duree: number): string {
   if (duree >= 0.5) return 'croche';
   return 'double croche';
 }
+
+/* ---------- Notes écrites : dièses, bémols et armures ---------- */
+
+/** Noms des 7 degrés, de Do à Si. */
+export const NOMS_DEGRES = ['Do', 'Ré', 'Mi', 'Fa', 'Sol', 'La', 'Si'];
+/** Demi-tons depuis Do de chaque degré naturel. */
+const DEMITONS_DEGRE = [0, 2, 4, 5, 7, 9, 11];
+
+/** Altération : -1 = bémol, 0 = naturel (bécarre), 1 = dièse. */
+export type Alteration = -1 | 0 | 1;
+
+/**
+ * Note telle qu'elle est écrite : sa hauteur (MIDI) et son orthographe.
+ * Si♭3 et La♯3 ont le même MIDI mais pas la même place sur la portée.
+ */
+export interface NoteEcrite {
+  midi: number;
+  /** Index diatonique (nombre de degrés depuis Do0) : place sur la portée. */
+  degre: number;
+  alteration: Alteration;
+}
+
+/** Lit « Do4 », « Fa#3 », « Sib4 »… en gardant l'orthographe (dièse ou bémol). */
+export function lireNote(nom: string): NoteEcrite {
+  const m = /^(do|ré|re|mi|fa|sol|la|si)(#|b)?(-?\d)$/i.exec(nom.trim());
+  if (!m) throw new Error(`Note invalide : « ${nom} » (exemple attendu : Do4, Ré#4, Sib3)`);
+  const base = BASES[m[1].toLowerCase()];
+  const alteration: Alteration = m[2] === '#' ? 1 : m[2] === 'b' ? -1 : 0;
+  const octave = parseInt(m[3], 10);
+  return {
+    midi: (octave + 1) * 12 + base + alteration,
+    degre: octave * 7 + DEMITONS_DEGRE.indexOf(base),
+    alteration,
+  };
+}
+
+/** Nom d'une note écrite, sans octave : « Sib », « Fa# », « Do ». */
+export function nomEcrit(n: Pick<NoteEcrite, 'degre' | 'alteration'>): string {
+  const d = ((n.degre % 7) + 7) % 7;
+  return NOMS_DEGRES[d] + (n.alteration === 1 ? '#' : n.alteration === -1 ? 'b' : '');
+}
+
+/** Ordre des dièses (Fa Do Sol Ré La Mi Si) et des bémols (Si Mi La Ré Sol Do Fa), en degrés. */
+export const ORDRE_DIESES = [3, 0, 4, 1, 5, 2, 6];
+export const ORDRE_BEMOLS = [6, 2, 5, 1, 4, 0, 3];
+
+/**
+ * Altération imposée par l'armure à un degré (0 = Do … 6 = Si).
+ * `armure` : nombre de dièses (positif) ou de bémols (négatif).
+ */
+export function alterationArmure(degre: number, armure: number): Alteration {
+  const d = ((degre % 7) + 7) % 7;
+  if (armure > 0 && ORDRE_DIESES.slice(0, armure).includes(d)) return 1;
+  if (armure < 0 && ORDRE_BEMOLS.slice(0, -armure).includes(d)) return -1;
+  return 0;
+}
+
+/**
+ * Écrit une hauteur MIDI : en dièses (armure ≥ 0) ou en bémols (armure < 0),
+ * en préférant la note naturelle ou celle de l'armure.
+ */
+export function ecrireMidi(midi: number, armure = 0): NoteEcrite {
+  const octave = Math.floor(midi / 12) - 1;
+  const pc = ((midi % 12) + 12) % 12;
+  const candidats: NoteEcrite[] = [];
+  for (let d = 0; d < 7; d++) {
+    for (const alt of [0, 1, -1] as Alteration[]) {
+      let diff = pc - DEMITONS_DEGRE[d] - alt;
+      let oct = octave;
+      if (diff === 12 || diff === -12) {
+        oct += diff > 0 ? 1 : -1;
+        diff = 0;
+      }
+      if (diff === 0) candidats.push({ midi, degre: oct * 7 + d, alteration: alt });
+    }
+  }
+  const score = (n: NoteEcrite) =>
+    (n.alteration === alterationArmure(n.degre, armure) ? 0 : 2) +
+    (n.alteration === 0 ? 0 : (armure < 0 ? n.alteration === -1 : n.alteration === 1) ? 1 : 3);
+  return candidats.sort((a, b) => score(a) - score(b))[0];
+}
+
+/** Degré (0 = Do … 6 = Si) d'une note écrite, pour sa couleur. */
+export function degreDansGamme(degre: number): number {
+  return ((degre % 7) + 7) % 7;
+}
+
+/** Position sur la portée d'une note écrite (0 = ligne du bas). */
+export function positionEcrite(degre: number, cle: Cle): number {
+  return degre - LIGNE_DU_BAS[cle];
+}

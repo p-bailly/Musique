@@ -1,0 +1,176 @@
+{
+  "niveau": 6,
+  "titre": "Les deux mains",
+  "description": "La grande portée : main droite en clé de sol, main gauche en clé de fa, en même temps.",
+  "lecons": [
+    {
+      "id": "n6-l1",
+      "titre": "La grande portée",
+      "description": "Deux portées reliées par une accolade : en haut la main droite (clé de sol), en bas la main gauche (clé de fa). Les notes alignées verticalement se jouent ensemble.",
+      "cle": "double",
+      "tempo": 60,
+      "main": "droite",
+      "attente": true,
+      "voix": [
+        {
+          "main": "droite",
+          "notes": [
+            { "note": "Do4", "duree": 1, "doigt": 1 },
+            { "note": "Ré4", "duree": 1, "doigt": 2 },
+            { "note": "Mi4", "duree": 1, "doigt": 3 },
+            { "note": "Ré4", "duree": 1, "doigt": 2 },
+            { "note": "Do4", "duree": 4, "doigt": 1 },
+            { "note": "Mi4", "duree": 1, "doigt": 3 },
+            { "note": "Fa4", "duree": 1, "doigt": 4 },
+            { "note": "Sol4", "duree": 2, "doigt": 5 },
+            { "note": "Do4", "duree": 4, "doigt": 1 }
+          ]
+        },
+        {
+          "main": "gauche",
+          "notes": [
+            { "note": "Do3", "duree": 4, "doigt": 1 },
+            { "note": "Do3", "duree": 2, "doigt": 1 },
+            { "note": "Sol2", "duree": 2, "doigt": 5 },
+            { "note": "Do3", "duree": 4, "doigt": 1 },
+            { "note": "Sol2", "duree": 2, "doigt": 5 },
+            { "note": "Do3", "duree": 2, "doigt": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n6-l2",
+      "titre": "Accords à la main gauche",
+      "description": "Un accord, ce sont plusieurs notes jouées ensemble. La main gauche pose Do-Mi-Sol (doigts 5-3-1) pendant que la main droite chante.",
+      "cle": "double",
+      "tempo": 60,
+      "main": "droite",
+      "attente": true,
+      "voix": [
+        {
+          "main": "droite",
+          "notes": [
+            { "note": "Mi4", "duree": 2, "doigt": 3, "nuance": "p" },
+            { "note": "Fa4", "duree": 2, "doigt": 4 },
+            { "note": "Ré4", "duree": 2, "doigt": 2 },
+            { "note": "Do4", "duree": 2, "doigt": 1 },
+            { "note": "Mi4", "duree": 2, "doigt": 3, "nuance": "f" },
+            { "note": "Fa4", "duree": 2, "doigt": 4 },
+            { "note": "Ré4", "duree": 2, "doigt": 2 },
+            { "note": "Do4", "duree": 2, "doigt": 1 }
+          ]
+        },
+        {
+          "main": "gauche",
+          "notes": [
+            { "note": "Do3+Mi3+Sol3", "duree": 2, "doigt": [5, 3, 1] },
+            { "note": "Do3+Fa3+La3", "duree": 2, "doigt": [5, 2, 1] },
+            { "note": "Si2+Ré3+Sol3", "duree": 2, "doigt": [5, 3, 1] },
+            { "note": "Do3+Mi3+Sol3", "duree": 2, "doigt": [5, 3, 1] },
+            { "note": "Do3+Mi3+Sol3", "duree": 2, "doigt": [5, 3, 1] },
+            { "note": "Do3+Fa3+La3", "duree": 2, "doigt": [5, 2, 1] },
+            { "note": "Si2+Ré3+Sol3", "duree": 2, "doigt": [5, 3, 1] },
+            { "note": "Do3+Mi3+Sol3", "duree": 2, "doigt": [5, 3, 1] }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n6-l3",
+      "titre": "Au clair de la lune à deux mains",
+      "description": "La mélodie à droite, une basse tenue à gauche : Do et Sol, en clé de fa.",
+      "cle": "double",
+      "tempo": 72,
+      "main": "droite",
+      "voix": [
+        {
+          "main": "droite",
+          "notes": [
+            { "note": "Do4", "duree": 1, "doigt": 1, "nuance": "mf" },
+            { "note": "Do4", "duree": 1, "doigt": 1 },
+            { "note": "Do4", "duree": 1, "doigt": 1 },
+            { "note": "Ré4", "duree": 1, "doigt": 2 },
+            { "note": "Mi4", "duree": 2, "doigt": 3 },
+            { "note": "Ré4", "duree": 2, "doigt": 2 },
+            { "note": "Do4", "duree": 1, "doigt": 1 },
+            { "note": "Mi4", "duree": 1, "doigt": 3 },
+            { "note": "Ré4", "duree": 1, "doigt": 2 },
+            { "note": "Ré4", "duree": 1, "doigt": 2 },
+            { "note": "Do4", "duree": 4, "doigt": 1 }
+          ]
+        },
+        {
+          "main": "gauche",
+          "notes": [
+            { "note": "Do3", "duree": 4, "doigt": 1 },
+            { "note": "Do3", "duree": 2, "doigt": 1 },
+            { "note": "Sol2", "duree": 2, "doigt": 5 },
+            { "note": "Do3", "duree": 2, "doigt": 1 },
+            { "note": "Sol2", "duree": 2, "doigt": 5 },
+            { "note": "Do3", "duree": 4, "doigt": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n6-l4",
+      "titre": "Ode à la joie à deux mains",
+      "description": "Beethoven, 9e symphonie (1824). La main gauche alterne Do et Sol. Commence doucement (p), puis plus fort (f) la seconde fois.",
+      "cle": "double",
+      "tempo": 84,
+      "main": "droite",
+      "voix": [
+        {
+          "main": "droite",
+          "notes": [
+            { "note": "Mi4", "duree": 1, "doigt": 3, "nuance": "p" },
+            { "note": "Mi4", "duree": 1, "doigt": 3 },
+            { "note": "Fa4", "duree": 1, "doigt": 4 },
+            { "note": "Sol4", "duree": 1, "doigt": 5 },
+            { "note": "Sol4", "duree": 1, "doigt": 5 },
+            { "note": "Fa4", "duree": 1, "doigt": 4 },
+            { "note": "Mi4", "duree": 1, "doigt": 3 },
+            { "note": "Ré4", "duree": 1, "doigt": 2 },
+            { "note": "Do4", "duree": 1, "doigt": 1 },
+            { "note": "Do4", "duree": 1, "doigt": 1 },
+            { "note": "Ré4", "duree": 1, "doigt": 2 },
+            { "note": "Mi4", "duree": 1, "doigt": 3 },
+            { "note": "Mi4", "duree": 1.5, "doigt": 3 },
+            { "note": "Ré4", "duree": 0.5, "doigt": 2 },
+            { "note": "Ré4", "duree": 2, "doigt": 2 },
+            { "note": "Mi4", "duree": 1, "doigt": 3, "nuance": "f" },
+            { "note": "Mi4", "duree": 1, "doigt": 3 },
+            { "note": "Fa4", "duree": 1, "doigt": 4 },
+            { "note": "Sol4", "duree": 1, "doigt": 5 },
+            { "note": "Sol4", "duree": 1, "doigt": 5 },
+            { "note": "Fa4", "duree": 1, "doigt": 4 },
+            { "note": "Mi4", "duree": 1, "doigt": 3 },
+            { "note": "Ré4", "duree": 1, "doigt": 2 },
+            { "note": "Do4", "duree": 1, "doigt": 1 },
+            { "note": "Do4", "duree": 1, "doigt": 1 },
+            { "note": "Ré4", "duree": 1, "doigt": 2 },
+            { "note": "Mi4", "duree": 1, "doigt": 3 },
+            { "note": "Ré4", "duree": 1.5, "doigt": 2 },
+            { "note": "Do4", "duree": 0.5, "doigt": 1 },
+            { "note": "Do4", "duree": 2, "doigt": 1 }
+          ]
+        },
+        {
+          "main": "gauche",
+          "notes": [
+            { "note": "Do3", "duree": 4, "doigt": 1 },
+            { "note": "Sol2", "duree": 4, "doigt": 5 },
+            { "note": "Do3", "duree": 4, "doigt": 1 },
+            { "note": "Sol2", "duree": 4, "doigt": 5 },
+            { "note": "Do3", "duree": 4, "doigt": 1 },
+            { "note": "Sol2", "duree": 4, "doigt": 5 },
+            { "note": "Do3", "duree": 2, "doigt": 1 },
+            { "note": "Sol2", "duree": 2, "doigt": 5 },
+            { "note": "Do3", "duree": 4, "doigt": 1 }
+          ]
+        }
+      ]
+    }
+  ]
+}

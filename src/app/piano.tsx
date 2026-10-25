@@ -10,9 +10,9 @@ import { jouerNote, prechargerSons } from '@/audio/piano';
 import { BoutonMicro } from '@/components/BoutonMicro';
 import { Clavier } from '@/components/Clavier';
 import { Icone } from '@/components/Icones';
-import { NotePortee, Portee } from '@/components/Portee';
+import { elementsSimples, Portee } from '@/components/Portee';
 import { useMicro } from '@/hooks/useMicro';
-import { Cle, DO_CENTRAL, nomNote } from '@/music/notes';
+import { Cle, DO_CENTRAL, ecrireMidi, nomEcrit } from '@/music/notes';
 import { useReglages } from '@/store/Reglages';
 import { couleurNote } from '@/theme/couleurs';
 import { revenir } from '@/utils/navigation';
@@ -62,11 +62,8 @@ export default function PianoLibre() {
   const derniere = historique[historique.length - 1];
   // Clé choisie selon la dernière note : grave → clé de fa
   const cle: Cle = derniere !== undefined && derniere < DO_CENTRAL ? 'fa' : 'sol';
-  const notes: NotePortee[] = historique.map((m, i) => ({
-    midi: m,
-    duree: 1,
-    statut: i === historique.length - 1 ? 'actuelle' : 'futur',
-  }));
+  const elements = elementsSimples(historique.map((m) => ecrireMidi(m)), cle);
+  const derniereIndex = historique.length - 1;
 
   const L = width - insets.left - insets.right;
   const H = height - insets.top - insets.bottom;
@@ -118,13 +115,23 @@ export default function PianoLibre() {
           ]}
         >
           <Text style={[styles.nom, { color: derniere !== undefined ? couleurNote(derniere).texte : c.texteDiscret }]}>
-            {derniere !== undefined ? nomNote(derniere) : '?'}
+            {derniere !== undefined ? nomEcrit(ecrireMidi(derniere)) : '?'}
           </Text>
           <Text style={{ color: derniere !== undefined ? couleurNote(derniere).texte : c.texteDiscret, fontWeight: '700', textAlign: 'center', paddingHorizontal: 8 }}>{derniere !== undefined ? (cle === 'sol' ? 'clé de sol' : 'clé de fa') : surPiano ? 'Joue une note sur ton piano' : 'Joue une note'}</Text>
         </View>
 
         <View style={[styles.portee, { backgroundColor: c.surface, borderColor: c.bordure }]}>
-          <Portee cle={cle} notes={notes} largeur={Math.max(120, L - 336)} hauteur={hHaut - 16} afficherNoms={reglages.nomsNotes} />
+          <Portee
+            cle={cle}
+            armure={0}
+            mesure={null}
+            elements={elements}
+            tempsActuel={derniereIndex >= 0 ? derniereIndex : null}
+            statut={(i) => (i === derniereIndex ? 'actuelle' : 'futur')}
+            largeur={Math.max(120, L - 336)}
+            hauteur={hHaut - 16}
+            afficherNoms={reglages.nomsNotes}
+          />
         </View>
       </View>
 
@@ -135,7 +142,7 @@ export default function PianoLibre() {
         hauteur={hClavier}
         onAppui={onAppui}
         afficherNoms={reglages.nomsNotes}
-        surbrillance={derniere}
+        surbrillance={derniere !== undefined ? [{ midi: derniere }] : []}
         interactif={!surPiano}
       />
     </View>

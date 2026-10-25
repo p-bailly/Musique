@@ -3,20 +3,26 @@
  *
  * Le temps du morceau est mesuré en temps musicaux (noire = 1 temps).
  * Une boucle d'animation (requestAnimationFrame) fait avancer ce temps
- * selon le tempo et la vitesse choisie.
+ * selon le tempo et la vitesse choisie. Avant la première note, une mesure
+ * de décompte laisse le temps de se préparer.
  *
- * - Mode attente : le morceau s'arrête quand une note atteint la ligne,
- *   et ne repart que lorsque la bonne touche est jouée.
+ * Les notes sont regroupées : un groupe = les notes qui commencent en même
+ * temps (accord, deux mains). Un groupe est réussi quand toutes ses notes
+ * ont été jouées, dans n'importe quel ordre.
+ *
+ * - Mode attente : le morceau s'arrête quand un groupe atteint la ligne,
+ *   et ne repart que lorsque toutes ses notes sont jouées.
  * - Mode libre : le morceau défile ; une note non jouée à temps est manquée.
  */
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Lecon } from '@/data/lecons';
-import { nomNote } from '@/music/notes';
+import { Lecon, NoteMorceau } from '@/data/lecons';
+import { ecrireMidi, nomEcrit } from '@/music/notes';
 import { useRefActuelle } from './useRefActuelle';
 
 export type EtatNote = 'attente' | 'reussie' | 'manquee';
 export type Phase = 'pret' | 'enCours' | 'pause' | 'termine';
-export type SourceNote = 'ecran' | 'micro';
+/** D'où vient la note : clavier de l'écran, micro (vrai piano) ou clavier MIDI. */
+export type SourceNote = 'ecran' | 'micro' | 'midi';
 
 export interface Retour {
   type: 'ok' | 'erreur';
@@ -34,32 +40,39 @@ export interface Bilan {
   secondes: number;
 }
 
-/** Temps d'avance (en temps musicaux) avant la première note. */
-export const TEMPS_AVANT_DEBUT = 3;
 /** Tolérance pour jouer « à temps » en mode libre, en secondes. */
 const TOLERANCE_S = 0.3;
 /** En mode attente, on peut jouer la note un peu avant qu'elle n'arrive (en temps). */
 const AVANCE_ACCEPTEE = 1.5;
+/** Au micro, une même fausse note n'est comptée qu'une fois pendant ce délai (résonance). */
+const ANTI_REBOND_MICRO_MS = 700;
 
 interface Options {
   lecon: Lecon;
   vitesse: number;
   modeAttente: boolean;
   onFin: (bilan: Bilan) => void;
+  /**
+   * Appelée à chaque temps (pour le métronome) : `numero` < 0 pendant le
+   * décompte, `fort` sur le premier temps de chaque mesure.
+   */
+  onBattement?: (numero: number, fort: boolean) => void;
 }
 
-export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin }: Options) {
+export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin, onBattement }: Options) {
+  /** Une mesure de décompte avant la première note. */
+  const avantDebut = lecon.tempsParMesure;
   const [phase, setPhase] = useState<Phase>('pret');
-  const [temps, setTemps] = useState(-TEMPS_AVANT_DEBUT);
-  const [prochaine, setProchaine] = useState(0);
+  const [temps, setTemps] = useState(-avantDebut);
+  const [groupe, setGroupe] = useState(0);
   const [etats, setEtats] = useState<EtatNote[]>(() => lecon.notes.map(() => 'attente'));
   const [retour, setRetour] = useState<Retour | null>(null);
   const [enAttente, setEnAttente] = useState(false);
 
   // Références lues par la boucle d'animation (évite les fermetures périmées)
   const r = useRef({
-    temps: -TEMPS_AVANT_DEBUT,
-    prochaine: 0,
+    temps: -avantDebut,
+    groupe: 0,
     etats: [] as EtatNote[],
     reussies: 0,
     erreurs: 0,
@@ -67,8 +80,10 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin }: Options) {
     debutPartie: 0,
     phase: 'pret' as Phase,
     idRetour: 0,
+    derniereErreur: { pc: -1, quand: 0 },
   });
   const onFinRef = useRefActuelle(onFin);
+  const onBattementRef = useRefActuelle(onBattement);
   const reglages = useRefActuelle({ vitesse, modeAttente });
 
   /** Temps musicaux par seconde. */
@@ -82,6 +97,16 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin }: Options) {
   const signaler = (type: Retour['type'], midi: number, message: string) => {
     r.current.idRetour += 1;
     setRetour({ type, midi, message, id: r.current.idRetour });
+  };
+
+  /** Le groupe n'a plus de note à jouer. */
+  const groupeFini = (g: number) => lecon.groupes[g].indices.every((i) => r.current.etats[i] !== 'attente');
+
+  /** Passe les groupes terminés. */
+  const avancer = () => {
+    const s = r.current;
+    while (s.groupe < lecon.groupes.length && groupeFini(s.groupe)) s.groupe++;
+    setGroupe(s.groupe);
   };
 
   const terminer = useCallback(() => {
@@ -103,20 +128,21 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin }: Options) {
     const etatsInit: EtatNote[] = lecon.notes.map(() => 'attente');
     r.current = {
       ...r.current,
-      temps: -TEMPS_AVANT_DEBUT,
-      prochaine: 0,
+      temps: -avantDebut,
+      groupe: 0,
       etats: etatsInit,
       reussies: 0,
       erreurs: 0,
       manquees: 0,
       debutPartie: Date.now(),
+      derniereErreur: { pc: -1, quand: 0 },
     };
-    setTemps(-TEMPS_AVANT_DEBUT);
-    setProchaine(0);
+    setTemps(-avantDebut);
+    setGroupe(0);
     setEtats(etatsInit);
     setRetour(null);
     setEnAttente(false);
-  }, [lecon]);
+  }, [lecon, avantDebut]);
 
   const demarrer = useCallback(() => {
     reinitialiser();
@@ -138,39 +164,54 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin }: Options) {
       const dt = Math.min(0.1, (maintenant - precedent) / 1000); // borne si l'appli a été en arrière-plan
       precedent = maintenant;
       const s = r.current;
-      const notes = lecon.notes;
+      const groupes = lecon.groupes;
+      const avant = s.temps;
       let t = s.temps + dt * tempsParSeconde();
       let attente = false;
 
       if (reglages.current.modeAttente) {
-        // Le morceau se fige quand la prochaine note atteint la ligne
-        const n = notes[s.prochaine];
-        if (n && t >= n.debut) {
-          t = n.debut;
+        // Le morceau se fige quand le prochain groupe atteint la ligne
+        const g = groupes[s.groupe];
+        if (g && t >= g.debut) {
+          t = g.debut;
           attente = true;
         }
       } else {
         // Les notes dépassées sans être jouées sont manquées
         const tolerance = TOLERANCE_S * tempsParSeconde();
         let modif = false;
-        while (s.prochaine < notes.length && t > notes[s.prochaine].debut + tolerance) {
-          s.etats[s.prochaine] = 'manquee';
-          s.manquees++;
-          s.prochaine++;
+        while (s.groupe < groupes.length && t > groupes[s.groupe].debut + tolerance) {
+          for (const i of groupes[s.groupe].indices) {
+            if (s.etats[i] === 'attente') {
+              s.etats[i] = 'manquee';
+              s.manquees++;
+            }
+          }
+          s.groupe++;
           modif = true;
         }
         if (modif) {
           setEtats([...s.etats]);
-          setProchaine(s.prochaine);
+          setGroupe(s.groupe);
         }
       }
+
+      // Métronome : un battement à chaque temps entier franchi
+      for (let b = Math.floor(avant) + 1; b <= Math.floor(t); b++) {
+        if (b < lecon.dureeTotale) {
+          const dansMesure = (((b % lecon.tempsParMesure) + lecon.tempsParMesure) % lecon.tempsParMesure);
+          onBattementRef.current?.(b, dansMesure === 0);
+        }
+      }
+      // Le tout premier temps du décompte (t = -avantDebut) n'est jamais « franchi »
+      if (avant === -avantDebut && t > avant) onBattementRef.current?.(-avantDebut, true);
 
       s.temps = t;
       setTemps(t);
       setEnAttente(attente);
 
-      // Fin du morceau : toutes les notes traitées et dernière note terminée
-      if (s.prochaine >= notes.length && t >= lecon.dureeTotale) {
+      // Fin du morceau : tous les groupes traités et dernière note terminée
+      if (s.groupe >= groupes.length && t >= lecon.dureeTotale) {
         terminer();
         return;
       }
@@ -181,46 +222,69 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin }: Options) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase, lecon, terminer]);
 
-  /** Une note vient d'être jouée (clavier à l'écran ou micro). */
+  /** Une note vient d'être jouée (clavier à l'écran, micro ou MIDI). */
   const jouer = useCallback(
     (midi: number, source: SourceNote) => {
       const s = r.current;
       if (s.phase !== 'enCours') return;
-      const attendue = lecon.notes[s.prochaine];
-      if (!attendue) return;
-
-      // Au micro, on tolère les erreurs d'octave fréquentes de la détection
-      const correcte = source === 'micro' ? midi % 12 === attendue.midi % 12 : midi === attendue.midi;
-      const ecart = attendue.debut - s.temps; // > 0 : la note n'est pas encore arrivée
+      const groupes = lecon.groupes;
+      if (s.groupe >= groupes.length) return;
       const avanceMax = reglages.current.modeAttente ? AVANCE_ACCEPTEE : TOLERANCE_S * tempsParSeconde();
 
-      if (correcte) {
-        if (ecart > avanceMax) return; // trop tôt : on ignore sans pénaliser
-        s.etats[s.prochaine] = 'reussie';
-        s.reussies++;
-        s.prochaine++;
-        setEtats([...s.etats]);
-        setProchaine(s.prochaine);
-        signaler('ok', attendue.midi, 'Bravo !');
-      } else {
-        s.erreurs++;
-        signaler('erreur', midi, `Oups ! C'était ${nomNote(attendue.midi)}, pas ${nomNote(midi)}`);
+      // Notes encore attendues dans les groupes « jouables » maintenant
+      const candidates: NoteMorceau[] = [];
+      for (let g = s.groupe; g < groupes.length && groupes[g].debut - s.temps <= avanceMax; g++) {
+        for (const i of groupes[g].indices) if (s.etats[i] === 'attente') candidates.push(lecon.notes[i]);
       }
+      // Au micro, on tolère les erreurs d'octave fréquentes de la détection
+      const correspond = (n: NoteMorceau) => (source === 'micro' ? n.midi % 12 === midi % 12 : n.midi === midi);
+      const trouvee = candidates.find(correspond);
+
+      if (trouvee) {
+        s.etats[trouvee.index] = 'reussie';
+        s.reussies++;
+        setEtats([...s.etats]);
+        avancer();
+        signaler('ok', trouvee.midi, 'Bravo !');
+        return;
+      }
+      const attendues = groupes[s.groupe].indices.filter((i) => s.etats[i] === 'attente').map((i) => lecon.notes[i]);
+      // Trop tôt : rien n'est encore jouable, on ignore sans pénaliser
+      if (candidates.length === 0) return;
+      if (source === 'micro') {
+        // La résonance d'une note juste ou une même fausse note ne compte qu'une fois
+        const maintenant = Date.now();
+        const pc = midi % 12;
+        if (s.derniereErreur.pc === pc && maintenant - s.derniereErreur.quand < ANTI_REBOND_MICRO_MS) return;
+        if (lecon.notes.some((n) => s.etats[n.index] === 'reussie' && n.midi % 12 === pc && Math.abs(n.debut - s.temps) < 1)) {
+          return;
+        }
+        s.derniereErreur = { pc, quand: maintenant };
+      }
+      s.erreurs++;
+      const jouee = nomEcrit(ecrireMidi(midi, lecon.armure));
+      const attendu = (attendues.length ? attendues : candidates).map((n) => nomEcrit(n)).join(' + ');
+      signaler('erreur', midi, `Oups ! C'était ${attendu}, pas ${jouee}`);
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [lecon],
   );
 
+  const g = lecon.groupes[groupe];
   return {
     phase,
     temps,
-    prochaine,
+    /** Index du groupe à jouer. */
+    groupe,
     etats,
     retour,
     enAttente,
+    /** Durée du décompte, en temps. */
+    avantDebut,
     demarrer,
     basculerPause,
     jouer,
-    noteAttendue: lecon.notes[prochaine] as Lecon['notes'][number] | undefined,
+    /** Notes du groupe actuel qui restent à jouer. */
+    attendues: g ? g.indices.filter((i) => etats[i] === 'attente').map((i) => lecon.notes[i]) : [],
   };
 }
