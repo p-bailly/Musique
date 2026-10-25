@@ -419,16 +419,18 @@ function Accord({
       {afficherDoigtes &&
         el.tetes.some((t) => t.doigt !== undefined) &&
         (() => {
-          const doigts = el.tetes.filter((t) => t.doigt !== undefined).map((t) => t.doigt!);
-          // Du haut vers le bas, empilés
-          const liste = doigtsEnBas ? doigts : [...doigts].reverse();
+          // Empilés comme les notes : le doigt de la note la plus haute en haut
+          const liste = el.tetes.filter((t) => t.doigt !== undefined).map((t) => t.doigt!).reverse();
+          // Main droite : au-dessus (et au-dessus de la hampe montante) ; main gauche : sous la portée,
+          // à gauche d'une hampe descendante pour ne pas la croiser
           const base = doigtsEnBas
-            ? Math.max(y(Math.min(pMin, 0) - 2.4), versLeHaut ? 0 : yFinHampe + g * 1.6)
+            ? y(Math.min(pMin, 0) - 2.4)
             : Math.min(y(Math.max(pMax, 8) + 2.2), versLeHaut ? yFinHampe - g * 0.4 : Infinity);
+          const xd = doigtsEnBas && !versLeHaut && hampe ? x - rx - g * 0.6 : x;
           return liste.map((d, i) => (
             <SvgText
               key={`d${i}`}
-              x={x}
+              x={xd}
               y={doigtsEnBas ? base + i * g * 1.15 : base - (liste.length - 1 - i) * g * 1.15}
               fontSize={g * 1.25}
               fontFamily="Nunito_900Black"

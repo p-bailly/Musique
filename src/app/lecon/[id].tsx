@@ -193,7 +193,7 @@ function Jeu({ leconId }: { leconId: string }) {
             statut={statut}
             dureeTotale={lecon.dureeTotale}
             largeur={largeurPortee}
-            hauteur={hBandeau - 8}
+            hauteur={hBandeau - 14}
             afficherNoms={reglages.nomsNotes}
           />
         </View>
