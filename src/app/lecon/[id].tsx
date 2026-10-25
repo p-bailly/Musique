@@ -394,6 +394,9 @@ const styles = StyleSheet.create({
   superpose: {
     ...StyleSheet.absoluteFill,
     backgroundColor: 'rgba(0,0,0,0.45)',
+    // Au-dessus des touches noires du clavier (qui ont elles-mêmes une élévation sur Android)
+    zIndex: 10,
+    elevation: 10,
   },
   superposeContenu: { flexGrow: 1, alignItems: 'center', justifyContent: 'center', padding: 16 },
   carte: { maxWidth: 620, width: '100%', alignItems: 'center', gap: 10 },
