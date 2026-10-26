@@ -3,7 +3,7 @@
  *
  * Pour ajouter une leçon : l'ajouter dans le fichier JSON du niveau voulu.
  * Pour ajouter un niveau : créer `niveaux/niveauN.json` et l'importer ci-dessous.
- * Le format est décrit dans le README.
+ * Le format est décrit dans CLAUDE.md, « Format des leçons ».
  */
 import { Cle, DO_CENTRAL, lireNote, NoteEcrite } from '@/music/notes';
 import niveau1 from './niveaux/niveau1.json';
