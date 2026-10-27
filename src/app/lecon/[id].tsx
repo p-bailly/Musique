@@ -17,13 +17,13 @@ import { Icone, NomIcone } from '@/components/Icones';
 import { NotesQuiTombent } from '@/components/NotesQuiTombent';
 import { Portee, StatutTete } from '@/components/Portee';
 import { Bouton, Carte, Choix, Etoiles } from '@/components/ui';
-import { leconSuivante, trouverLecon } from '@/data/lecons';
+import { fenetreClavier, leconSuivante, trouverLecon } from '@/data/lecons';
 import { useMicro } from '@/hooks/useMicro';
 import { Bilan, useMoteurJeu } from '@/hooks/useMoteurJeu';
 import { nomEcrit } from '@/music/notes';
 import { calculerEtoiles, useProgression } from '@/store/Progression';
 import { useMidi, useNotesMidi } from '@/store/Midi';
-import { Affichage, useReglages } from '@/store/Reglages';
+import { Affichage, TaillePartition, useReglages } from '@/store/Reglages';
 import { revenir } from '@/utils/navigation';
 
 export default function EcranLecon() {
@@ -43,7 +43,7 @@ export default function EcranLecon() {
 
 function Jeu({ leconId }: { leconId: string }) {
   const lecon = trouverLecon(leconId)!;
-  const { reglages, modifier, couleurs: c } = useReglages();
+  const { reglages, couleurs: c } = useReglages();
   const midi = useMidi();
   // Un clavier MIDI connecté remplace le micro : détection parfaite, accords compris
   const auMicro = !midi.connecte;
@@ -120,17 +120,23 @@ function Jeu({ leconId }: { leconId: string }) {
   const avecChute = vue !== 'partition';
   const hClavier = avecChute ? Math.round(H * (lecon.cle === 'double' && avecPortee ? 0.28 : 0.33)) : 0;
   // La grande portée (deux mains) a besoin de plus de hauteur ; sans portée, une simple barre
-  const hBandeau = !avecChute
-    ? H
-    : avecPortee
-      ? Math.round(Math.max(96, H * (lecon.cle === 'double' ? 0.46 : 0.3)))
-      : 60;
+  const taille = reglages.taillePartition;
+  const partHauteur = lecon.cle === 'double' ? PART_DOUBLE[taille] : PART_SIMPLE[taille];
+  const hBandeau = !avecChute ? H : avecPortee ? Math.round(Math.max(96, H * partHauteur)) : 60;
   const hChute = avecChute ? Math.max(60, H - hClavier - hBandeau) : 0;
   const tempsVisibles = Math.min(4, Math.max(2, hChute / 55));
   // Vue « partition » : colonnes étroites et plusieurs lignes de portée
   const largeurCote = avecChute ? Math.min(220, L * 0.24) : Math.min(150, L * 0.17);
   const largeurPortee = avecPortee ? L - largeurCote * 2 - 16 : 0;
-  const nbLignes = avecChute ? 1 : Math.max(1, Math.floor((hBandeau - 14) / (lecon.cle === 'double' ? 170 : 105)));
+  const nbLignes = avecChute
+    ? 1
+    : Math.max(1, Math.floor((hBandeau - 14) / (lecon.cle === 'double' ? LIGNE_DOUBLE[taille] : LIGNE_SIMPLE[taille])));
+
+  // Clavier et notes qui tombent : 4 octaves au plus, la fenêtre suit la musique
+  const [fenetre, setFenetre] = useState(() => fenetreClavier(lecon, 0));
+  const voulue = fenetreClavier(lecon, moteur.groupe, fenetre);
+  if (voulue[0] !== fenetre[0] || voulue[1] !== fenetre[1]) setFenetre(voulue);
+  const [clavierMin, clavierMax] = voulue;
 
   // État de chaque note sur la portée
   const { etats, groupe } = moteur;
@@ -249,8 +255,8 @@ function Jeu({ leconId }: { leconId: string }) {
               etats={moteur.etats}
               groupe={moteur.groupe}
               temps={moteur.temps}
-              min={lecon.clavierMin}
-              max={lecon.clavierMax}
+              min={clavierMin}
+              max={clavierMax}
               largeur={L}
               hauteur={hChute}
               tempsVisibles={tempsVisibles}
@@ -260,8 +266,8 @@ function Jeu({ leconId }: { leconId: string }) {
 
           {/* ---------- Clavier guide : où poser les doigts ---------- */}
           <Clavier
-            min={lecon.clavierMin}
-            max={lecon.clavierMax}
+            min={clavierMin}
+            max={clavierMax}
             largeur={L}
             hauteur={hClavier}
             surbrillance={enJeu ? attendues : []}
@@ -288,8 +294,6 @@ function Jeu({ leconId }: { leconId: string }) {
             {lecon.mesure.unite} · tempo {Math.round(lecon.tempo * reglages.vitesse)}
           </Text>
           <Options
-            vue={vue}
-            onVue={(v) => modifier({ affichage: v })}
             attente={modeAttente}
             onAttente={() => setModeAttente((m) => !m)}
             metronome={metronome}
@@ -311,8 +315,6 @@ function Jeu({ leconId }: { leconId: string }) {
         <Superpose>
           <Text style={[styles.grandTitre, { color: c.texte }]}>Pause</Text>
           <Options
-            vue={vue}
-            onVue={(v) => modifier({ affichage: v })}
             attente={modeAttente}
             onAttente={() => setModeAttente((m) => !m)}
             metronome={metronome}
@@ -359,6 +361,13 @@ function Jeu({ leconId }: { leconId: string }) {
   );
 }
 
+/** Part de la hauteur donnée à la portée (vue « les deux »), selon la taille choisie. */
+const PART_SIMPLE: Record<TaillePartition, number> = { petite: 0.26, moyenne: 0.3, grande: 0.4 };
+const PART_DOUBLE: Record<TaillePartition, number> = { petite: 0.4, moyenne: 0.46, grande: 0.58 };
+/** Hauteur visée d'une ligne de portée (vue « partition ») : plus elle est haute, plus les notes sont grosses. */
+const LIGNE_SIMPLE: Record<TaillePartition, number> = { petite: 95, moyenne: 130, grande: 190 };
+const LIGNE_DOUBLE: Record<TaillePartition, number> = { petite: 150, moyenne: 210, grande: 300 };
+
 /** « 1 erreur », « 2 erreurs »… */
 function pluriel(n: number, mot: string) {
   return `${n} ${mot}${n > 1 ? 's' : ''}`;
@@ -377,20 +386,17 @@ function Superpose({ children }: { children: React.ReactNode }) {
 
 /** Choix de la vue, mode attente et métronome (avant de jouer et en pause). */
 function Options({
-  vue,
-  onVue,
   attente,
   onAttente,
   metronome,
   onMetronome,
 }: {
-  vue: Affichage;
-  onVue: (v: Affichage) => void;
   attente: boolean;
   onAttente: () => void;
   metronome: boolean;
   onMetronome: () => void;
 }) {
+  const { reglages, modifier } = useReglages();
   return (
     <View style={styles.options}>
       <Choix<Affichage>
@@ -399,9 +405,20 @@ function Options({
           { valeur: 'partition', libelle: 'Partition' },
           { valeur: 'chute', libelle: 'Notes' },
         ]}
-        valeur={vue}
-        onChange={onVue}
+        valeur={reglages.affichage}
+        onChange={(v) => modifier({ affichage: v })}
       />
+      {reglages.affichage !== 'chute' && (
+        <Choix<TaillePartition>
+          options={[
+            { valeur: 'petite', libelle: 'Petites notes' },
+            { valeur: 'moyenne', libelle: 'Moyennes' },
+            { valeur: 'grande', libelle: 'Grandes' },
+          ]}
+          valeur={reglages.taillePartition}
+          onChange={(v) => modifier({ taillePartition: v })}
+        />
+      )}
       <View style={styles.ligne}>
         <Interrupteur libelle="Attente" actif={attente} onPress={onAttente} />
         <Interrupteur libelle="Métronome" actif={metronome} onPress={onMetronome} />

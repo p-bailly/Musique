@@ -70,9 +70,19 @@ export function Portee({
   // Sous la grande portée : place pour les doigtés de la main gauche (accords)
   const margeBas = double ? 2.5 : 0;
   // Interligne : toutes les portées et leurs marges doivent tenir en hauteur
+  // Sur plusieurs lignes, au moins deux mesures doivent tenir en largeur (notes serrées à 2,2 interlignes)
+  const parMesure = mesure ? (mesure.temps * 4) / mesure.unite : 4;
+  const gLignes =
+    ligne !== undefined
+      ? largeur / (12 + (2 * parMesure * 2.2) / Math.max(0.25, Math.min(1, ...elements.map((e) => e.duree))))
+      : Infinity;
   const g = Math.max(
     3,
-    Math.min((hauteur - hauteurNoms) / (portees.length * demiBandes + (double ? 0.5 : 0) + margeBas + 1), largeur / 16),
+    Math.min(
+      (hauteur - hauteurNoms) / (portees.length * demiBandes + (double ? 0.5 : 0) + margeBas + 1),
+      largeur / 16,
+      gLignes,
+    ),
   );
   /** Ordonnée d'une position sur la portée n° `k` (0 = la ligne du bas). */
   const yDe = (k: number) => {

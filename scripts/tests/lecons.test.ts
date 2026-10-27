@@ -70,4 +70,19 @@ for (const id of ['n8-l1', 'n8-l2', 'n8-l3', 'n8-l4']) {
   // Chaque groupe commence sur une subdivision régulière (pas d'erreur d'arrondi)
   for (const g of l.groupes) assert.ok(Math.abs(g.debut * 8 - Math.round(g.debut * 8)) < 1e-6, `${id} ${g.debut}`);
 }
-console.log('lecons : OK');
+// Clavier : 4 octaves au plus, la fenêtre contient toujours les notes à jouer
+import('../../src/data/lecons').then(({ fenetreClavier, DEMITONS_MAX_CLAVIER }) => {
+  let f: [number, number] | undefined;
+  let changements = 0;
+  elise.groupes.forEach((g, i) => {
+    const n = fenetreClavier(elise, i, f);
+    if (f && n !== f) changements++;
+    f = n;
+    assert.equal(f[1] - f[0], DEMITONS_MAX_CLAVIER);
+    for (const k of g.indices) assert.ok(elise.notes[k].midi >= f[0] && elise.notes[k].midi <= f[1], `groupe ${i}`);
+  });
+  assert.ok(changements < 40, `${changements} changements de fenêtre`);
+  const petite = trouverLecon('n1-l1')!;
+  assert.deepEqual(fenetreClavier(petite, 0), [petite.clavierMin, petite.clavierMax]);
+  console.log('lecons : OK');
+});

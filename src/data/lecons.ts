@@ -5,7 +5,7 @@
  * Pour ajouter un niveau : créer `niveaux/niveauN.json` et l'importer ci-dessous.
  * Le format est décrit dans CLAUDE.md, « Format des leçons ».
  */
-import { Cle, DO_CENTRAL, lireNote, NoteEcrite } from '@/music/notes';
+import { Cle, DO_CENTRAL, estToucheNoire, lireNote, NoteEcrite } from '@/music/notes';
 import niveau1 from './niveaux/niveau1.json';
 import niveau2 from './niveaux/niveau2.json';
 import niveau3 from './niveaux/niveau3.json';
@@ -300,4 +300,48 @@ export function trouverLecon(id: string): Lecon | undefined {
 export function leconSuivante(id: string): Lecon | undefined {
   const i = TOUTES_LES_LECONS.findIndex((l) => l.id === id);
   return i >= 0 ? TOUTES_LES_LECONS[i + 1] : undefined;
+}
+
+/** Largeur maximale du clavier affiché pendant une leçon (au-delà, les touches deviennent trop fines). */
+export const DEMITONS_MAX_CLAVIER = 48;
+
+/**
+ * Touches à montrer pendant le groupe `groupe` : toute la plage de la leçon si elle tient
+ * en 4 octaves ; sinon une fenêtre de 4 octaves (de Do à Do) qui suit la musique. La fenêtre
+ * ne bouge que lorsque les notes à jouer en sortent, et se place pour montrer le plus
+ * possible des notes des 4 temps suivants.
+ */
+export function fenetreClavier(lecon: Lecon, groupe: number, precedente?: [number, number]): [number, number] {
+  if (lecon.clavierMax - lecon.clavierMin <= DEMITONS_MAX_CLAVIER || !lecon.groupes.length) {
+    return [lecon.clavierMin, lecon.clavierMax];
+  }
+  const g = Math.min(groupe, lecon.groupes.length - 1);
+  const actuelles = lecon.groupes[g].indices.map((i) => lecon.notes[i].midi);
+  const dedans = (f: [number, number], m: number) => m >= f[0] && m <= f[1];
+  if (precedente && actuelles.every((m) => dedans(precedente, m))) return precedente;
+
+  const proches: number[] = [];
+  for (let k = g; k < lecon.groupes.length && lecon.groupes[k].debut < lecon.groupes[g].debut + 4; k++) {
+    for (const i of lecon.groupes[k].indices) proches.push(lecon.notes[i].midi);
+  }
+  const min = Math.min(...actuelles);
+  const max = Math.max(...actuelles);
+  // Débuts possibles : les Do d'abord ; si l'accord est trop large pour eux, n'importe quelle touche blanche
+  let debuts: number[] = [];
+  for (let d = Math.floor(min / 12) * 12; d >= max - DEMITONS_MAX_CLAVIER; d -= 12) debuts.push(d);
+  if (!debuts.length) {
+    for (let d = min; d >= max - DEMITONS_MAX_CLAVIER; d--) if (!estToucheNoire(d)) debuts.push(d);
+  }
+  if (!debuts.length) debuts = [min];
+  let meilleure: [number, number] = [debuts[0], debuts[0] + DEMITONS_MAX_CLAVIER];
+  let score = -1;
+  for (const debut of debuts) {
+    const f: [number, number] = [debut, debut + DEMITONS_MAX_CLAVIER];
+    const s = proches.filter((m) => dedans(f, m)).length;
+    if (s > score) {
+      score = s;
+      meilleure = f;
+    }
+  }
+  return meilleure;
 }

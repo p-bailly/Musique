@@ -10,7 +10,7 @@ import { Text } from '@/components/Texte';
 import { Bouton, Carte, Choix } from '@/components/ui';
 import { useMidi } from '@/store/Midi';
 import { useProgression } from '@/store/Progression';
-import { Affichage, ChoixTheme, useCouleurs, useReglages } from '@/store/Reglages';
+import { Affichage, ChoixTheme, TaillePartition, useCouleurs, useReglages } from '@/store/Reglages';
 
 /** Ligne avec un titre, une explication et un interrupteur. */
 function Interrupteur({
@@ -59,6 +59,16 @@ export default function EcranReglages() {
           ]}
           valeur={reglages.affichage}
           onChange={(v) => modifier({ affichage: v })}
+        />
+        <Text style={[styles.libelle, { color: c.texte }]}>Taille des notes sur la partition</Text>
+        <Choix<TaillePartition>
+          options={[
+            { valeur: 'petite', libelle: 'Petite' },
+            { valeur: 'moyenne', libelle: 'Moyenne' },
+            { valeur: 'grande', libelle: 'Grande' },
+          ]}
+          valeur={reglages.taillePartition}
+          onChange={(v) => modifier({ taillePartition: v })}
         />
       </Carte>
 

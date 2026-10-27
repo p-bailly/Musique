@@ -11,8 +11,12 @@ export type ChoixTheme = 'systeme' | 'clair' | 'sombre';
 /** Ce que montre l'écran de jeu : la partition, les notes qui tombent (avec le clavier), ou les deux. */
 export type Affichage = 'les-deux' | 'partition' | 'chute';
 
+/** Taille de la portée dans les leçons. */
+export type TaillePartition = 'petite' | 'moyenne' | 'grande';
+
 export interface Reglages {
   affichage: Affichage;
+  taillePartition: TaillePartition;
   /** Multiplicateur de tempo (0.5 = deux fois plus lent). */
   vitesse: number;
   /** Le morceau attend que la bonne touche soit jouée. */
@@ -34,6 +38,7 @@ export interface Reglages {
 
 export const REGLAGES_DEFAUT: Reglages = {
   affichage: 'les-deux',
+  taillePartition: 'moyenne',
   vitesse: 1,
   modeAttente: true,
   nomsNotes: true,
