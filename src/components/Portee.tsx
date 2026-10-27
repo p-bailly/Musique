@@ -5,7 +5,8 @@
  * liaisons, nuances et doigtés.
  *
  * La partition défile mesure par mesure : la fenêtre commence à la mesure de
- * la note à jouer.
+ * la note à jouer. Les croches et plus petites valeurs d'un même temps sont reliées par
+ * des ligatures (barres) plutôt que par des crochets, et chaque mesure porte son numéro.
  */
 import React from 'react';
 import Svg, { Circle, Ellipse, G, Line, Path, Rect, Text as SvgText } from 'react-native-svg';
@@ -70,12 +71,7 @@ export function Portee({
   // Sous la grande portée : place pour les doigtés de la main gauche (accords)
   const margeBas = double ? 2.5 : 0;
   // Interligne : toutes les portées et leurs marges doivent tenir en hauteur
-  // Sur plusieurs lignes, au moins deux mesures doivent tenir en largeur (notes serrées à 2,2 interlignes)
-  const parMesure = mesure ? (mesure.temps * 4) / mesure.unite : 4;
-  const gLignes =
-    ligne !== undefined
-      ? largeur / (12 + (2 * parMesure * 2.2) / Math.max(0.25, Math.min(1, ...elements.map((e) => e.duree))))
-      : Infinity;
+  const gLignes = ligne !== undefined ? interligneMaxParLignes(largeur, mesure, elements) : Infinity;
   const g = Math.max(
     3,
     Math.min(
@@ -84,9 +80,12 @@ export function Portee({
       gLignes,
     ),
   );
+  // Place laissée libre (interligne limité par la largeur) : la partition est centrée verticalement
+  const hauteurUtile = g * (portees.length * demiBandes + (double ? 0.5 : 0) + margeBas + 1) + hauteurNoms;
+  const margeHaut = Math.max(0, (hauteur - hauteurUtile) / 2);
   /** Ordonnée d'une position sur la portée n° `k` (0 = la ligne du bas). */
   const yDe = (k: number) => {
-    const yBas = g * 0.5 + g * (bande.max / 2) + k * g * (demiBandes + 0.5);
+    const yBas = margeHaut + g * 0.5 + g * (bande.max / 2) + k * g * (demiBandes + 0.5);
     return (p: number) => yBas - (p * g) / 2;
   };
   const y = portees.map((_, k) => yDe(k));
@@ -177,6 +176,14 @@ export function Portee({
   // Barre de mesure à mi-chemin entre la dernière note de la mesure et la première de la suivante
   const xBarre = (t: number) => xDe(t) - Math.max(g * 1.2, pxParTemps * 0.45);
   const yHautPortees = y[0](8);
+
+  // Ligatures : notes brèves consécutives d'une même voix, dans un même temps
+  const { hampes, barresLigature } = calculerLigatures(visibles, {
+    temps: tempsDeLigature(mesure),
+    xDe,
+    y: (el) => y[portees.indexOf(el.portee)],
+    g,
+  });
   const yBasPortees = y[portees.length - 1](0);
 
   // Groupe actuel : fond léger derrière les notes à jouer
@@ -280,9 +287,38 @@ export function Portee({
             alterations={alterationsAffichees}
             doigtsEnBas={double && el.portee === 'fa'}
             afficherDoigtes={afficherDoigtes}
+            ligature={hampes.get(el)}
           />
         );
       })}
+
+      {/* Barres des ligatures */}
+      {barresLigature.map((b, i) => (
+        <Path
+          key={`l${i}`}
+          d={`M ${b.x1} ${b.y1} L ${b.x2} ${b.y2} L ${b.x2} ${b.y2 + b.epaisseur} L ${b.x1} ${b.y1 + b.epaisseur} Z`}
+          fill={c.encre}
+          opacity={b.opacite}
+        />
+      ))}
+
+      {/* Numéros de mesure, au-dessus de la portée, juste avant la barre (à l'écart des doigtés) */}
+      {mesure &&
+        [debutFenetre, ...barres]
+          .filter((t) => Math.abs(t / tempsParMesure - Math.round(t / tempsParMesure)) < 1e-6 && t < finFenetre - 1e-6)
+          .map((t) => (
+            <SvgText
+              key={`m${t}`}
+              x={(t === debutFenetre ? xContenu : xBarre(t)) - 3}
+              y={yHautPortees - g * 0.5}
+              fontSize={Math.max(9, g * 1.05)}
+              fontFamily="Nunito_800ExtraBold"
+              fill={c.texteDiscret}
+              textAnchor="end"
+            >
+              {Math.round(t / tempsParMesure) + 1}
+            </SvgText>
+          ))}
 
       {/* Liaisons : arc entre deux têtes de même hauteur */}
       {visibles.flatMap((el, i) => {
@@ -368,7 +404,9 @@ function Accord({
   alterations,
   doigtsEnBas,
   afficherDoigtes,
+  ligature,
 }: {
+  ligature?: Hampe;
   el: ElementPartition;
   x: number;
   y: (p: number) => number;
@@ -388,10 +426,11 @@ function Accord({
   const duree = el.duree;
   const pleine = duree < 2;
   const hampe = duree < 4;
-  const versLeHaut = (pMin + pMax) / 2 < 4; // sous la ligne du milieu : hampe vers le haut
+  // Sous la ligne du milieu : hampe vers le haut (sauf ligature : sens commun au groupe)
+  const versLeHaut = ligature ? ligature.versLeHaut : (pMin + pMax) / 2 < 4;
   const pointee = [3, 1.5, 0.75, 0.375].includes(duree);
   const xh = versLeHaut ? x + rx - 0.8 : x - rx + 0.8;
-  const yFinHampe = versLeHaut ? y(pMax) - g * 3.3 : y(pMin) + g * 3.3;
+  const yFinHampe = ligature ? ligature.yFin : versLeHaut ? y(pMax) - g * 3.3 : y(pMin) + g * 3.3;
 
   // Lignes supplémentaires
   const supp: number[] = [];
@@ -441,8 +480,9 @@ function Accord({
       })}
       {hampe && <Line x1={xh} x2={xh} y1={versLeHaut ? y(pMin) : y(pMax)} y2={yFinHampe} stroke={encre} strokeWidth={1.4} />}
       {/* Crochet(s) : croche, double croche (et triolet de doubles), triple croche */}
-      {duree <= 0.5 &&
-        Array.from({ length: duree <= 0.125 + 1e-6 ? 3 : duree <= 0.25 + 1e-6 ? 2 : 1 }, (_, k) => k).map((k) => {
+      {!ligature &&
+        duree <= 0.5 &&
+        Array.from({ length: nbCrochets(duree) }, (_, k) => k).map((k) => {
           const y0 = yFinHampe + (versLeHaut ? k * g * 0.9 : -k * g * 0.9);
           const s = versLeHaut ? 1 : -1;
           return (
@@ -483,6 +523,162 @@ function Accord({
         })()}
     </G>
   );
+}
+
+/* ---------- Partition sur plusieurs lignes ---------- */
+
+/** Sur plusieurs lignes, au moins deux mesures doivent tenir en largeur (notes serrées à 2,2 interlignes). */
+function interligneMaxParLignes(
+  largeur: number,
+  mesure: { temps: number; unite: number } | null,
+  elements: ElementPartition[],
+): number {
+  const parMesure = mesure ? (mesure.temps * 4) / mesure.unite : 4;
+  const dureeMin = Math.max(0.25, Math.min(1, ...elements.map((e) => e.duree)));
+  return largeur / (12 + (2 * parMesure * 2.2) / dureeMin);
+}
+
+/**
+ * Nombre de lignes de portée pour la vue « partition » : celui que donne la hauteur visée,
+ * plus si les notes sont de toute façon limitées par la largeur (sinon la place serait perdue).
+ */
+export function nombreDeLignes(
+  hauteur: number,
+  hauteurVisee: number,
+  largeur: number,
+  cle: ClePartition,
+  mesure: { temps: number; unite: number } | null,
+  elements: ElementPartition[],
+): number {
+  const g = interligneMaxParLignes(largeur, mesure, elements);
+  // Hauteur d'une ligne à cet interligne (portées, marges, comme dans Portee)
+  const hauteurMin = cle === 'double' ? g * (2 * 7.5 + 0.5 + 2.5 + 1) : g * 10 + 16;
+  return Math.max(1, Math.floor(hauteur / Math.max(hauteurVisee, hauteurMin)));
+}
+
+/* ---------- Ligatures ---------- */
+
+/** Hampe imposée par une ligature : sens commun et extrémité (sur la barre). */
+interface Hampe {
+  versLeHaut: boolean;
+  yFin: number;
+}
+
+interface BarreLigature {
+  x1: number;
+  y1: number;
+  x2: number;
+  y2: number;
+  epaisseur: number;
+  opacite: number;
+}
+
+/** Nombre de crochets (ou de barres) d'une valeur : 1 croche, 2 double croche, 3 triple croche. */
+function nbCrochets(duree: number): number {
+  const base = [0.75, 0.375].includes(duree) ? (duree * 2) / 3 : duree; // valeur pointée
+  if (base <= 0.125 + 1e-6) return 3;
+  if (base <= 0.25 + 1e-6) return 2;
+  if (base <= 0.5 + 1e-6) return 1;
+  return 0;
+}
+
+/** Durée d'un temps pour regrouper les ligatures : la noire, ou la noire pointée en 3/8, 6/8, 9/8… */
+function tempsDeLigature(mesure: { temps: number; unite: number } | null): number {
+  if (mesure && mesure.unite === 8 && mesure.temps % 3 === 0) return 1.5;
+  return 1;
+}
+
+/**
+ * Regroupe les notes brèves (croche et moins) qui se suivent dans une même voix, sur une même
+ * portée et dans un même temps, et calcule leurs hampes (sens commun, extrémités alignées sur
+ * une barre peu inclinée) et les barres à dessiner : une pour les croches, deux pour les doubles
+ * croches (ou un bout de barre pour une double isolée dans le groupe), trois pour les triples.
+ */
+function calculerLigatures(
+  visibles: ElementPartition[],
+  o: { temps: number; xDe: (t: number) => number; y: (el: ElementPartition) => (p: number) => number; g: number },
+): { hampes: Map<ElementPartition, Hampe>; barresLigature: BarreLigature[] } {
+  const { g } = o;
+  const hampes = new Map<ElementPartition, Hampe>();
+  const barresLigature: BarreLigature[] = [];
+  const rx = g * 0.62;
+
+  // Groupes : même voix et portée, sans silence entre deux notes, dans le même temps
+  const parVoix = new Map<string, ElementPartition[]>();
+  for (const el of visibles) {
+    const cle = `${el.voix}:${el.portee}`;
+    if (!parVoix.has(cle)) parVoix.set(cle, []);
+    parVoix.get(cle)!.push(el);
+  }
+  const groupes: ElementPartition[][] = [];
+  for (const liste of parVoix.values()) {
+    liste.sort((a, b) => a.debut - b.debut);
+    let courant: ElementPartition[] = [];
+    const fermer = () => {
+      if (courant.length >= 2) groupes.push(courant);
+      courant = [];
+    };
+    for (const el of liste) {
+      const breve = el.tetes.length > 0 && nbCrochets(el.duree) > 0;
+      const prec = courant[courant.length - 1];
+      const memeTemps = prec && Math.floor((prec.debut + 1e-6) / o.temps) === Math.floor((el.debut + 1e-6) / o.temps);
+      const contigu = prec && Math.abs(prec.debut + prec.duree - el.debut) < 1e-6;
+      if (!breve || !memeTemps || !contigu) fermer();
+      if (breve) courant.push(el);
+    }
+    fermer();
+  }
+
+  for (const groupe of groupes) {
+    const y = o.y(groupe[0]);
+    const pos = groupe.map((el) => {
+      const ps = el.tetes.map((t) => positionEcrite(t.degre, el.portee));
+      return { min: Math.min(...ps), max: Math.max(...ps) };
+    });
+    const moyenne = pos.reduce((s, p) => s + (p.min + p.max) / 2, 0) / pos.length;
+    const versLeHaut = moyenne < 4;
+    const maxBarres = Math.max(...groupe.map((el) => nbCrochets(el.duree)));
+    const longueur = g * 3.3 + (maxBarres - 1) * g * 0.75;
+    const xs = groupe.map((el) => o.xDe(el.debut) + (versLeHaut ? rx - 0.8 : -rx + 0.8));
+    // Extrémité naturelle de chaque hampe
+    const bouts = pos.map((p) => (versLeHaut ? y(p.max) - longueur : y(p.min) + longueur));
+    const dx = xs[xs.length - 1] - xs[0];
+    const pente = dx > 0 ? Math.max(-0.18, Math.min(0.18, (bouts[bouts.length - 1] - bouts[0]) / dx)) : 0;
+    // La barre passe au plus loin des têtes pour qu'aucune hampe ne soit trop courte
+    const decalages = bouts.map((b, i) => b - pente * (xs[i] - xs[0]));
+    const a = versLeHaut ? Math.min(...decalages) : Math.max(...decalages);
+    const yLigne = (x: number) => a + pente * (x - xs[0]);
+    groupe.forEach((el, i) => hampes.set(el, { versLeHaut, yFin: yLigne(xs[i]) }));
+
+    // Barres : la k-ième barre relie les notes voisines qui ont au moins k crochets
+    const epaisseur = g * 0.48;
+    const pas = g * 0.75 * (versLeHaut ? 1 : -1);
+    const decalageBarre = versLeHaut ? 0 : -epaisseur;
+    // Une barre est atténuée comme ses notes une fois jouées : on garde l'encre pleine, plus lisible
+    const ajouter = (x1: number, x2: number, k: number) =>
+      barresLigature.push({
+        x1,
+        x2,
+        y1: yLigne(x1) + k * pas + decalageBarre,
+        y2: yLigne(x2) + k * pas + decalageBarre,
+        epaisseur,
+        opacite: 1,
+      });
+    for (let k = 0; k < maxBarres; k++) {
+      const n = groupe.map((el) => nbCrochets(el.duree) > k);
+      for (let i = 0; i < groupe.length; i++) {
+        if (!n[i]) continue;
+        if (i + 1 < groupe.length && n[i + 1]) ajouter(xs[i], xs[i + 1], k);
+        else if (!(i > 0 && n[i - 1])) {
+          // Note isolée à ce niveau : bout de barre vers sa voisine
+          const vers = i + 1 < groupe.length ? 1 : -1;
+          const l = Math.min(g * 1.2, Math.abs(xs[i + vers] - xs[i]) / 2);
+          ajouter(vers > 0 ? xs[i] : xs[i] - l, vers > 0 ? xs[i] + l : xs[i], k);
+        }
+      }
+    }
+  }
+  return { hampes, barresLigature };
 }
 
 /* ---------- Silences ---------- */
@@ -625,6 +821,7 @@ function CleDeFa({ couleur }: { couleur: string }) {
 export function elementsSimples(notes: { midi: number; degre: number; alteration: Alteration }[], cle: Cle): ElementPartition[] {
   return notes.map((n, i) => ({
     portee: cle,
+    voix: 0,
     debut: i,
     duree: 1,
     main: 'droite',

@@ -17,7 +17,7 @@ import { Clavier } from '@/components/Clavier';
 import { EtatMidi } from '@/components/EtatMidi';
 import { Icone, NomIcone } from '@/components/Icones';
 import { NotesQuiTombent } from '@/components/NotesQuiTombent';
-import { Portee, StatutTete } from '@/components/Portee';
+import { nombreDeLignes, Portee, StatutTete } from '@/components/Portee';
 import { Bouton, Carte, Choix, Etoiles } from '@/components/ui';
 import { fenetreClavier, leconSuivante, trouverLecon } from '@/data/lecons';
 import { Bilan, libelleRythme, Passage, useMoteurJeu } from '@/hooks/useMoteurJeu';
@@ -131,11 +131,20 @@ function Jeu({ leconId }: { leconId: string }) {
   const hChute = avecChute ? Math.max(60, H - hClavier - hBandeau) : 0;
   const tempsVisibles = Math.min(4, Math.max(2, hChute / 55));
   // Vue « partition » : colonnes étroites et plusieurs lignes de portée
-  const largeurCote = avecChute ? Math.min(220, L * 0.24) : Math.min(150, L * 0.17);
-  const largeurPortee = avecPortee ? L - largeurCote * 2 - 16 : 0;
+  // Colonnes autour de la portée : à gauche retour, titre et message ; à droite pause et MIDI
+  const largeurCote = avecChute ? Math.min(170, L * 0.2) : Math.min(120, L * 0.15);
+  const largeurDroite = 48;
+  const largeurPortee = avecPortee ? L - largeurCote - largeurDroite - 16 : 0;
   const nbLignes = avecChute
     ? 1
-    : Math.max(1, Math.floor((hBandeau - 14) / (lecon.cle === 'double' ? LIGNE_DOUBLE[taille] : LIGNE_SIMPLE[taille])));
+    : nombreDeLignes(
+        hBandeau - 14,
+        lecon.cle === 'double' ? LIGNE_DOUBLE[taille] : LIGNE_SIMPLE[taille],
+        largeurPortee,
+        lecon.cle,
+        lecon.mesure,
+        lecon.partition,
+      );
 
   // Clavier et notes qui tombent : 4 octaves au plus, la fenêtre suit la musique
   const [fenetre, setFenetre] = useState(() => fenetreClavier(lecon, 0));
@@ -199,17 +208,25 @@ function Jeu({ leconId }: { leconId: string }) {
       {/* ---------- Bandeau du haut ---------- */}
       <View style={[styles.bandeau, { height: hBandeau }]}>
         <View style={[styles.cote, avecPortee ? { width: largeurCote } : styles.coteSouple]}>
-          <View style={styles.ligne}>
-            <BoutonRond icone="retour" onPress={() => revenir()} accessibilityLabel="Retour au menu" />
-            <Text style={[styles.titre, { color: c.texte }]} numberOfLines={2}>
-              {lecon.titre}
-              {infoBoucle ? `\n${infoBoucle}` : ''}
-            </Text>
-          </View>
-          {avecPortee && (
-            <Text style={[styles.message, { color: couleurMessage }]} numberOfLines={2}>
-              {message}
-            </Text>
+          {avecPortee ? (
+            <>
+              <BoutonRond icone="retour" onPress={() => revenir()} accessibilityLabel="Retour au menu" />
+              <Text style={[styles.titre, { color: c.texteDiscret }]} numberOfLines={2}>
+                {lecon.titre}
+              </Text>
+              {!!infoBoucle && <Text style={[styles.titre, { color: c.primaire }]}>{infoBoucle}</Text>}
+              <Text style={[styles.message, { color: couleurMessage }]} numberOfLines={4}>
+                {message}
+              </Text>
+            </>
+          ) : (
+            <View style={styles.ligne}>
+              <BoutonRond icone="retour" onPress={() => revenir()} accessibilityLabel="Retour au menu" />
+              <Text style={[styles.titre, { color: c.texteDiscret }]} numberOfLines={1}>
+                {lecon.titre}
+                {infoBoucle ? ` · ${infoBoucle}` : ''}
+              </Text>
+            </View>
           )}
         </View>
 
@@ -238,15 +255,15 @@ function Jeu({ leconId }: { leconId: string }) {
           </Text>
         )}
 
-        <View style={[styles.cote, styles.coteDroit, avecPortee && { width: largeurCote }]}>
-          <View style={styles.ligne}>
-            <EtatMidi />
+        <View style={[styles.cote, styles.coteDroit, avecPortee && { width: largeurDroite }]}>
+          <View style={avecPortee ? styles.colonne : styles.ligne}>
             <BoutonRond
               icone={moteur.phase === 'pause' ? 'lecture' : 'pause'}
               onPress={moteur.basculerPause}
               accessibilityLabel="Pause et options"
               desactive={moteur.phase !== 'enCours' && moteur.phase !== 'pause'}
             />
+            <EtatMidi compacte />
           </View>
         </View>
       </View>
@@ -606,9 +623,10 @@ const styles = StyleSheet.create({
   options: { alignItems: 'center', gap: 10 },
   coteDroit: { alignItems: 'flex-end' },
   ligne: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  titre: { fontSize: 16, fontWeight: '800', flexShrink: 1 },
-  message: { fontSize: 17, fontWeight: '800' },
-  portee: { flex: 1, borderRadius: 12, borderWidth: 1, overflow: 'hidden', paddingVertical: 4 },
+  titre: { fontSize: 13, fontWeight: '800', flexShrink: 1 },
+  message: { fontSize: 15, fontWeight: '800' },
+  colonne: { alignItems: 'center', gap: 8 },
+  portee: { flex: 1, borderRadius: 12, borderWidth: 1, overflow: 'hidden', paddingVertical: 4, justifyContent: 'center' },
   pastille: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 },
   compteurBouton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   rond: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },

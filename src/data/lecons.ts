@@ -101,6 +101,8 @@ export interface TetePartition extends NoteEcrite {
 /** Élément dessiné sur la portée : note, accord ou silence. */
 export interface ElementPartition {
   portee: Cle;
+  /** Numéro de la voix (ordre dans le JSON) : les ligatures ne relient que les notes d'une même voix. */
+  voix: number;
   debut: number;
   /** Durée écrite (une note liée est dessinée en plusieurs figures). */
   duree: number;
@@ -177,7 +179,7 @@ export function compilerLecon(json: LeconJSON, niveau: number): Lecon {
   // 1) Éléments de partition, voix par voix
   const elements: ElementPartition[] = [];
   let dureeTotale = 0;
-  for (const v of voix) {
+  for (const [numeroVoix, v] of voix.entries()) {
     const mainVoix: Main = v.main === 'gauche' ? 'gauche' : v.main === 'droite' ? 'droite' : mainLecon;
     let t = 0;
     for (const n of v.notes) {
@@ -193,6 +195,7 @@ export function compilerLecon(json: LeconJSON, niveau: number): Lecon {
       const doigts = Array.isArray(n.doigt) ? n.doigt : n.doigt !== undefined ? [n.doigt] : [];
       elements.push({
         portee,
+        voix: numeroVoix,
         debut: t,
         duree: n.duree,
         nuance: n.nuance,
