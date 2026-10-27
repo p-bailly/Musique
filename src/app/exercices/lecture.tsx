@@ -35,7 +35,7 @@ export default function CartesFlash() {
   const params = useLocalSearchParams<{ cle?: string; niveau?: string }>();
   const cle: CleExercice = params.cle === 'fa' || params.cle === 'les-deux' ? params.cle : 'sol';
   const niveau: NiveauLecture = params.niveau === 'portee' || params.niveau === 'etendu' ? params.niveau : 'debutant';
-  const { reglages, couleurs: c } = useReglages();
+  const { couleurs: c } = useReglages();
   const { enregistrerExercice } = useProgression();
   const midi = useMidi();
   const { width } = useWindowDimensions();
@@ -97,7 +97,7 @@ export default function CartesFlash() {
     [carte, repondre],
   );
   useNotesMidi(jouee);
-  const auMicro = reglages.entree === 'piano' && !midi.connecte;
+  const auMicro = !midi.connecte;
   const micro = useMicro({ onNotes: (midis) => jouee(midis[0]) });
   const demarrerMicro = micro.demarrer;
   useEffect(() => {

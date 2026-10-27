@@ -1,15 +1,16 @@
 /**
- * Réglages : vitesse des notes, mode attente, noms des notes, son,
+ * Réglages : vue des leçons, vitesse des notes, mode attente, noms des notes,
  * thème clair/sombre, déblocage des leçons, remise à zéro.
  */
 import { router } from 'expo-router';
 import React from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { MiseAJour } from '@/components/MiseAJour';
 import { Text } from '@/components/Texte';
 import { Bouton, Carte, Choix } from '@/components/ui';
 import { useMidi } from '@/store/Midi';
 import { useProgression } from '@/store/Progression';
-import { ChoixTheme, Entree, useCouleurs, useReglages } from '@/store/Reglages';
+import { Affichage, ChoixTheme, useCouleurs, useReglages } from '@/store/Reglages';
 
 /** Ligne avec un titre, une explication et un interrupteur. */
 function Interrupteur({
@@ -49,19 +50,16 @@ export default function EcranReglages() {
   return (
     <ScrollView contentContainerStyle={styles.contenu}>
       <Carte style={styles.bloc}>
-        <Text style={[styles.titre, { color: c.texte }]}>Je joue…</Text>
-        <Choix<Entree>
+        <Text style={[styles.titre, { color: c.texte }]}>Pendant les leçons, afficher…</Text>
+        <Choix<Affichage>
           options={[
-            { valeur: 'piano', libelle: 'Sur mon piano (micro)' },
-            { valeur: 'ecran', libelle: 'Sur l’écran' },
+            { valeur: 'les-deux', libelle: 'Partition + notes' },
+            { valeur: 'partition', libelle: 'La partition' },
+            { valeur: 'chute', libelle: 'Les notes qui tombent' },
           ]}
-          valeur={reglages.entree}
-          onChange={(v) => modifier({ entree: v })}
+          valeur={reglages.affichage}
+          onChange={(v) => modifier({ affichage: v })}
         />
-        <Text style={{ color: c.texteDiscret, fontSize: 14 }}>
-          Sur ton piano, le micro s’allume tout seul dans les leçons et le clavier de l’écran sert seulement de guide
-          pour savoir où poser les doigts.
-        </Text>
       </Carte>
 
       <Carte style={styles.bloc}>
@@ -132,12 +130,6 @@ export default function EcranReglages() {
           onChange={(v) => modifier({ nomsNotes: v })}
         />
         <Interrupteur
-          titre="Son du clavier"
-          detail="Jouer le son du piano quand tu touches le clavier à l'écran (mode « sur l’écran »)."
-          valeur={reglages.son}
-          onChange={(v) => modifier({ son: v })}
-        />
-        <Interrupteur
           titre="Métronome"
           detail="Un clic à chaque temps pendant le morceau (plus aigu sur le premier temps de la mesure)."
           valeur={reglages.metronome}
@@ -180,6 +172,8 @@ export default function EcranReglages() {
         </Text>
         <Bouton titre="Calibrer le micro" variante="secondaire" onPress={() => router.push('/calibration')} />
       </Carte>
+
+      <MiseAJour />
 
       <Bouton titre="Effacer ma progression" variante="danger" onPress={confirmerRemiseAZero} />
 

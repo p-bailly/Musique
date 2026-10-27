@@ -3,7 +3,7 @@
  * Lancer : npx tsx scripts/tests/exercices.test.ts
  */
 import assert from 'node:assert/strict';
-import { notesDictee, notesLecture, tirer, tirerCle } from '../../src/music/exercices';
+import { notesDictee, notesLecture, tirer, tirerAccord, tirerCle, tirerHauteur } from '../../src/music/exercices';
 import { nomEcrit, positionEcrite } from '../../src/music/notes';
 
 assert.deepEqual(notesLecture('sol', 'debutant').map(nomEcrit), ['Do', 'Ré', 'Mi', 'Fa', 'Sol']);
@@ -29,4 +29,20 @@ for (let i = 0; i < 200; i++) {
 assert.equal(tirerCle('fa'), 'fa');
 assert.equal(tirerCle('les-deux', () => 0.2), 'sol');
 assert.equal(tirerCle('les-deux', () => 0.8), 'fa');
+
+// Plus aigu ou plus grave : deux notes différentes, écart selon le niveau
+for (let i = 0; i < 200; i++) {
+  const f = tirerHauteur('facile');
+  const ef = Math.abs(f.seconde - f.premiere);
+  assert.ok(ef >= 5 && ef <= 12);
+  const d = tirerHauteur('difficile');
+  const ed = Math.abs(d.seconde - d.premiere);
+  assert.ok(ed >= 1 && ed <= 3);
+}
+// Majeur ou mineur : tierce de 4 ou 3 demi-tons, quinte juste
+assert.deepEqual(tirerAccord(() => 0).notes, [55, 59, 62]);
+assert.equal(tirerAccord(() => 0).type, 'majeur');
+const mineur = tirerAccord(() => 0.9);
+assert.equal(mineur.type, 'mineur');
+assert.deepEqual(mineur.notes.map((n) => n - mineur.notes[0]), [0, 3, 7]);
 console.log('exercices : OK');

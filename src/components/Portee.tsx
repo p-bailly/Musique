@@ -32,6 +32,11 @@ interface Props {
   hauteur: number;
   afficherNoms: boolean;
   afficherDoigtes?: boolean;
+  /**
+   * Partition sur plusieurs lignes (vue « partition ») : numéro de cette ligne. Chaque ligne
+   * montre des mesures entières ; la ligne 0 contient la note à jouer, les suivantes la suite.
+   */
+  ligne?: number;
 }
 
 /** Positions (en demi-interlignes) gardées autour de chaque portée. */
@@ -54,6 +59,7 @@ export function Portee({
   hauteur,
   afficherNoms,
   afficherDoigtes = true,
+  ligne,
 }: Props) {
   const c = useCouleurs();
   const double = cle === 'double';
@@ -87,11 +93,27 @@ export function Portee({
   const tempsParMesure = mesure ? (mesure.temps * 4) / mesure.unite : 4;
   const dureeMin = Math.min(1, ...elements.map((e) => e.duree));
   const disponible = largeur - xContenu - g;
-  const pxParTemps = Math.max((g * 3) / Math.max(0.5, dureeMin), Math.min(disponible / (tempsParMesure * 2), g * 7));
+  const pxLisible = (g * 3) / Math.max(0.5, dureeMin);
+  // Sur plusieurs lignes : autant de mesures entières que la largeur en permet (au moins
+  // 2,2 interlignes par plus petite valeur), réparties sur toute la ligne
+  const utile = disponible - g * 1.6;
+  const pxSerre = (g * 2.2) / Math.max(0.25, dureeMin);
+  const mesuresParLigne = Math.max(1, Math.floor(utile / (tempsParMesure * pxSerre)));
+  const pxParTemps =
+    ligne !== undefined && mesure
+      ? utile / (tempsParMesure * mesuresParLigne)
+      : Math.max(pxLisible, Math.min(disponible / (tempsParMesure * 2), g * 7));
 
   // Fenêtre : commence à la mesure de la note à jouer, sans la laisser sortir à droite
   let debutFenetre = 0;
-  if (tempsActuel !== null && tempsActuel > 0) {
+  let finFenetre = 0;
+  const parLignes = ligne !== undefined && mesure !== null;
+  if (parLignes) {
+    // Mesures entières : la ligne change quand la note à jouer passe à la ligne suivante
+    const mesureActuelle = tempsActuel !== null && tempsActuel > 0 ? Math.floor(tempsActuel / tempsParMesure + 1e-6) : 0;
+    debutFenetre = (Math.floor(mesureActuelle / mesuresParLigne) + ligne) * mesuresParLigne * tempsParMesure;
+    finFenetre = debutFenetre + mesuresParLigne * tempsParMesure;
+  } else if (tempsActuel !== null && tempsActuel > 0) {
     if (mesure) {
       debutFenetre = Math.floor(tempsActuel / tempsParMesure + 1e-6) * tempsParMesure;
       if ((tempsActuel - debutFenetre) * pxParTemps > disponible * 0.7) debutFenetre = tempsActuel - (disponible * 0.3) / pxParTemps;
@@ -100,10 +122,12 @@ export function Portee({
       debutFenetre = Math.max(0, tempsActuel - (disponible * 0.75) / pxParTemps);
     }
   }
-  const finFenetre = debutFenetre + disponible / pxParTemps;
+  if (!parLignes) finFenetre = debutFenetre + disponible / pxParTemps;
   const xDe = (t: number) => xContenu + g * 1.4 + (t - debutFenetre) * pxParTemps;
 
-  const visibles = elements.filter((e) => e.debut >= debutFenetre - 1e-6 && e.debut < finFenetre - 0.25);
+  const visibles = elements.filter(
+    (e) => e.debut >= debutFenetre - 1e-6 && e.debut < finFenetre - (parLignes ? 1e-6 : 0.25),
+  );
 
   // Altérations à dessiner : celles qui diffèrent de l'armure ou d'une altération déjà vue dans la mesure
   const alterationsAffichees = new Map<TetePartition, Alteration>();
@@ -135,7 +159,7 @@ export function Portee({
   const barres: number[] = [];
   if (mesure) {
     const premiere = Math.ceil((debutFenetre + 1e-6) / tempsParMesure) * tempsParMesure;
-    for (let t = premiere; t < finFenetre; t += tempsParMesure) {
+    for (let t = premiere; t < finFenetre + (parLignes ? 1e-6 : 0); t += tempsParMesure) {
       if (dureeTotale === undefined || t < dureeTotale - 1e-6) barres.push(t);
     }
   }
@@ -146,7 +170,13 @@ export function Portee({
   const yBasPortees = y[portees.length - 1](0);
 
   // Groupe actuel : fond léger derrière les notes à jouer
-  const xActuel = tempsActuel !== null && tempsActuel >= debutFenetre ? xDe(tempsActuel) : null;
+  const xActuel =
+    tempsActuel !== null && tempsActuel >= debutFenetre && tempsActuel < finFenetre ? xDe(tempsActuel) : null;
+
+  // Ligne au-delà de la fin du morceau : rien à dessiner
+  if (parLignes && dureeTotale !== undefined && debutFenetre >= dureeTotale - 1e-6) {
+    return <Svg width={largeur} height={hauteur} />;
+  }
 
   return (
     <Svg width={largeur} height={hauteur}>
@@ -349,7 +379,7 @@ function Accord({
   const pleine = duree < 2;
   const hampe = duree < 4;
   const versLeHaut = (pMin + pMax) / 2 < 4; // sous la ligne du milieu : hampe vers le haut
-  const pointee = [3, 1.5, 0.75].includes(duree);
+  const pointee = [3, 1.5, 0.75, 0.375].includes(duree);
   const xh = versLeHaut ? x + rx - 0.8 : x - rx + 0.8;
   const yFinHampe = versLeHaut ? y(pMax) - g * 3.3 : y(pMin) + g * 3.3;
 
@@ -400,9 +430,9 @@ function Accord({
         );
       })}
       {hampe && <Line x1={xh} x2={xh} y1={versLeHaut ? y(pMin) : y(pMax)} y2={yFinHampe} stroke={encre} strokeWidth={1.4} />}
-      {/* Crochet(s) pour croche et double croche */}
+      {/* Crochet(s) : croche, double croche (et triolet de doubles), triple croche */}
       {duree <= 0.5 &&
-        [0, ...(duree <= 0.25 ? [1] : [])].map((k) => {
+        Array.from({ length: duree <= 0.125 + 1e-6 ? 3 : duree <= 0.25 + 1e-6 ? 2 : 1 }, (_, k) => k).map((k) => {
           const y0 = yFinHampe + (versLeHaut ? k * g * 0.9 : -k * g * 0.9);
           const s = versLeHaut ? 1 : -1;
           return (
@@ -449,7 +479,7 @@ function Accord({
 
 /** Pause (4 temps), demi-pause (2), soupir (1), demi-soupir (½), quart de soupir (¼), pointés éventuellement. */
 function Silence({ x, y, g, duree, couleur }: { x: number; y: (p: number) => number; g: number; duree: number; couleur: string }) {
-  const pointee = [3, 1.5, 0.75].includes(duree);
+  const pointee = [3, 1.5, 0.75, 0.375].includes(duree);
   const base = pointee ? (duree * 2) / 3 : duree;
   let forme: React.ReactNode;
   if (base >= 4) {

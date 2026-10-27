@@ -7,6 +7,7 @@ import React from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icone } from '@/components/Icones';
+import { MiseAJour } from '@/components/MiseAJour';
 import { Text } from '@/components/Texte';
 import { Bouton, Etoiles, PastilleNote } from '@/components/ui';
 import { NIVEAUX, Lecon, TOUTES_LES_LECONS } from '@/data/lecons';
@@ -86,8 +87,10 @@ export default function Accueil() {
           </Pressable>
         </View>
 
+        <MiseAJour compacte style={styles.miseAJour} />
+
         <Bouton
-          titre="Exercices : lecture et oreille"
+          titre="Exercices : lire et écouter"
           variante="secondaire"
           onPress={() => router.push('/exercices')}
           style={styles.exercices}
@@ -146,8 +149,7 @@ export default function Accueil() {
           </View>
         ))}
         <Text style={[styles.pied, { color: c.texteDiscret }]}>
-          Astuce : pose ton téléphone à l’horizontale sur le pupitre et joue sur ton piano, le micro t’écoute. Tu
-          peux aussi jouer sur l’écran (Réglages).
+          Astuce : pose ton téléphone à l’horizontale sur le pupitre et joue sur ton piano, le micro t’écoute.
         </Text>
       </ScrollView>
     </SafeAreaView>
@@ -170,6 +172,7 @@ const styles = StyleSheet.create({
   action: { flex: 1, paddingHorizontal: 10 },
   boutonIcone: { width: 56, height: 56, borderRadius: 18, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   exercices: { marginTop: 10 },
+  miseAJour: { marginTop: 10 },
   niveau: { marginTop: 26 },
   titreNiveau: { fontSize: 22, fontWeight: '900' },
   descNiveau: { fontSize: 15, fontWeight: '600', marginTop: 2, marginBottom: 12 },

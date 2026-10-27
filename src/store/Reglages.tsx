@@ -8,20 +8,17 @@ import { clair, Palette, sombre } from '@/theme/couleurs';
 import { ecrire, lire } from './stockage';
 
 export type ChoixTheme = 'systeme' | 'clair' | 'sombre';
-/** Où l'élève joue : sur son vrai piano (écouté au micro) ou sur le clavier de l'écran. */
-export type Entree = 'piano' | 'ecran';
+/** Ce que montre l'écran de jeu : la partition, les notes qui tombent (avec le clavier), ou les deux. */
+export type Affichage = 'les-deux' | 'partition' | 'chute';
 
 export interface Reglages {
-  /** Mode de jeu principal : vrai piano (micro) par défaut. */
-  entree: Entree;
+  affichage: Affichage;
   /** Multiplicateur de tempo (0.5 = deux fois plus lent). */
   vitesse: number;
   /** Le morceau attend que la bonne touche soit jouée. */
   modeAttente: boolean;
   /** Afficher le nom des notes (clavier, blocs, portée). */
   nomsNotes: boolean;
-  /** Jouer le son du piano quand on touche le clavier à l'écran. */
-  son: boolean;
   theme: ChoixTheme;
   /** Accès libre à toutes les leçons, sans devoir débloquer. */
   toutDebloquer: boolean;
@@ -36,11 +33,10 @@ export interface Reglages {
 }
 
 export const REGLAGES_DEFAUT: Reglages = {
-  entree: 'piano',
+  affichage: 'les-deux',
   vitesse: 1,
   modeAttente: true,
   nomsNotes: true,
-  son: true,
   theme: 'systeme',
   toutDebloquer: false,
   metronome: false,

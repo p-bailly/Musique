@@ -2,8 +2,9 @@
 
 Application mobile (iOS et Android) pour **apprendre le solfège et le piano** quand on est grand débutant :
 lire les notes sur la portée et les jouer sur son vrai piano. Le téléphone, posé sur le pupitre, écoute au
-micro et vérifie chaque note (on peut aussi jouer sur un clavier MIDI ou sur le clavier de l'écran).
-31 leçons en 6 niveaux, cartes flash, dictée musicale, piano libre.
+micro et vérifie chaque note (ou un clavier MIDI). Partition, notes qui tombent, ou les deux.
+42 leçons en 8 niveaux (jusqu'à la Lettre à Élise originale), exercices de lecture et d'oreille, piano
+libre, mise à jour depuis l'appli.
 
 React Native + Expo (SDK 58) · TypeScript · 100 % hors-ligne, sans compte ni serveur.
 
@@ -26,7 +27,7 @@ disponible dans Expo Go.
 Compilé par GitHub Actions à chaque envoi sur la branche par défaut, à ouvrir depuis le téléphone :
 <https://github.com/p-bailly/Musique/releases/latest/download/SolfegePiano.apk>
 
-Chaque version s'installe par-dessus la précédente sans perdre la progression. Autres méthodes (EAS, iPhone) :
+Chaque version s'installe par-dessus la précédente sans perdre la progression ; ensuite, l'appli propose elle-même les mises à jour (Réglages). Autres méthodes (EAS, iPhone) :
 voir [CLAUDE.md](CLAUDE.md).
 
 ## Développement
@@ -46,3 +47,5 @@ Les leçons sont des fichiers JSON dans `src/data/niveaux/` (format complet dans
 
 Sons de piano : *Salamander Grand Piano V3* d'Alexander Holm, licence
 [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Mélodies du domaine public, sauf *Comptine d'un autre été* de Yann Tiersen (arrangement simplifié du début).
+Pièces classiques du niveau 8 transcrites d'après les éditions du [Mutopia Project](https://www.mutopiaproject.org/)
+(domaine public).

@@ -21,8 +21,8 @@ import { useRefActuelle } from './useRefActuelle';
 
 export type EtatNote = 'attente' | 'reussie' | 'manquee';
 export type Phase = 'pret' | 'enCours' | 'pause' | 'termine';
-/** D'où vient la note : clavier de l'écran, micro (vrai piano) ou clavier MIDI. */
-export type SourceNote = 'ecran' | 'micro' | 'midi';
+/** D'où vient la note : micro (vrai piano) ou clavier MIDI. */
+export type SourceNote = 'micro' | 'midi';
 
 export interface Retour {
   type: 'ok' | 'erreur';
@@ -238,7 +238,7 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin, onBattement }
     signaler('erreur', midi, `Oups ! C'était ${attendu}, pas ${jouee}`);
   };
 
-  /** Une note vient d'être jouée sur le clavier de l'écran ou un clavier MIDI (hauteur exacte). */
+  /** Une note vient d'être jouée sur un clavier MIDI (hauteur exacte). */
   const jouer = useCallback(
     (midi: number, _source: SourceNote) => {
       const s = r.current;

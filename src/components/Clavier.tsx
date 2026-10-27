@@ -1,11 +1,12 @@
 /**
- * Clavier de piano virtuel, avec le nom français de chaque touche et sa
- * couleur (bande en bas des touches blanches). La touche à jouer s'allume
- * entièrement à la couleur de sa note ; un appui juste ou faux
- * colore brièvement la touche en vert ou en rouge.
+ * Clavier de piano dessiné à l'écran, simple guide : on joue sur son vrai
+ * piano (micro ou clavier MIDI), il montre où poser les doigts. Nom français et
+ * couleur de chaque touche (bande en bas des touches blanches) ; la touche à
+ * jouer s'allume à la couleur de sa note, une note juste ou fausse colore
+ * brièvement la touche en vert ou en rouge.
  */
 import React, { memo, useEffect, useMemo, useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { DO_CENTRAL, estToucheNoire, nomNote } from '@/music/notes';
 import { useCouleurs } from '@/store/Reglages';
@@ -17,23 +18,16 @@ interface Props {
   max: number;
   largeur: number;
   hauteur: number;
-  onAppui: (midi: number) => void;
   /** Touches à allumer (notes à jouer : une seule, ou un accord), avec leur degré écrit pour la couleur. */
   surbrillance?: { midi: number; degre?: number }[];
   /** Dernier retour (juste / faux) à afficher sur une touche. */
   retour?: { midi: number; type: 'ok' | 'erreur'; id: number } | null;
   afficherNoms: boolean;
-  /**
-   * Faux quand l'élève joue sur son vrai piano : le clavier sert alors de
-   * guide visuel (où poser les doigts) et ne réagit pas au toucher.
-   */
-  interactif?: boolean;
 }
 
-function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour, afficherNoms, interactif = true }: Props) {
+function ClavierBase({ min, max, largeur, hauteur, surbrillance, retour, afficherNoms }: Props) {
   const c = useCouleurs();
   const touches = useMemo(() => geometrieClavier(min, max, largeur), [min, max, largeur]);
-  const [enfoncees, setEnfoncees] = useState<Set<number>>(new Set());
   const [idExpire, setIdExpire] = useState<number | null>(null);
 
   // Le flash vert/rouge disparaît après un court instant
@@ -43,18 +37,6 @@ function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour
     return () => clearTimeout(t);
   }, [retour]);
   const flash = retour && retour.id !== idExpire ? retour : null;
-
-  const appuyer = (midi: number) => {
-    setEnfoncees((s) => new Set(s).add(midi));
-    onAppui(midi);
-  };
-  const relacher = (midi: number) => {
-    setEnfoncees((s) => {
-      const n = new Set(s);
-      n.delete(midi);
-      return n;
-    });
-  };
 
   /** Couleur de la note allumée sur cette touche (Sib prend la couleur du Si), ou null. */
   const allumee = (midi: number) => {
@@ -75,7 +57,6 @@ function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour
     if (flash && flash.midi === midi) return flash.type === 'ok' ? c.succes : c.erreur;
     const a = allumee(midi);
     if (a) return a.fond;
-    if (enfoncees.has(midi)) return noire ? '#4A463D' : c.surfaceAlt;
     return noire ? c.toucheNoire : c.toucheBlanche;
   };
 
@@ -85,16 +66,12 @@ function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour
   const tailleTexte = Math.max(10, Math.min(16, (largeur / blanches.length) * 0.32));
 
   return (
-    <View style={{ width: largeur, height: hauteur }} pointerEvents={interactif ? 'auto' : 'none'}>
+    <View style={{ width: largeur, height: hauteur }} pointerEvents="none">
       {blanches.map((m) => {
         const t = touches.get(m)!;
         return (
-          <Pressable
+          <View
             key={m}
-            onPressIn={() => appuyer(m)}
-            onPressOut={() => relacher(m)}
-            accessibilityRole="button"
-            accessibilityLabel={`Touche ${nomNote(m)}`}
             style={[
               styles.blanche,
               {
@@ -113,18 +90,14 @@ function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour
             <View style={[styles.bandeNote, { backgroundColor: couleurNote(m).fond }]} />
             {/* Repère du do central */}
             {m === DO_CENTRAL && <View style={[styles.repere, { backgroundColor: c.toucheNoire }]} />}
-          </Pressable>
+          </View>
         );
       })}
       {noires.map((m) => {
         const t = touches.get(m)!;
         return (
-          <Pressable
+          <View
             key={m}
-            onPressIn={() => appuyer(m)}
-            onPressOut={() => relacher(m)}
-            accessibilityRole="button"
-            accessibilityLabel={`Touche ${nomNote(m)}`}
             style={[
               styles.noire,
               { left: t.x, width: t.largeur, height: hauteur * 0.6, backgroundColor: couleurTouche(m, true) },
@@ -139,7 +112,7 @@ function ClavierBase({ min, max, largeur, hauteur, onAppui, surbrillance, retour
                 {nomNote(m)}
               </Text>
             )}
-          </Pressable>
+          </View>
         );
       })}
     </View>

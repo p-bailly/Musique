@@ -1,15 +1,16 @@
 /**
- * Écran de jeu d'une leçon (en paysage) :
- *  - en haut : la portée avec la note à lire, les commandes et le retour visuel ;
- *  - au milieu : les notes qui tombent ;
- *  - en bas : le clavier virtuel.
+ * Écran de jeu d'une leçon (en paysage), joué sur un vrai piano (micro ou clavier MIDI).
+ * Selon le réglage « Vue » :
+ *  - les deux : la portée en haut, les notes qui tombent au milieu, le clavier guide en bas ;
+ *  - partition : la portée seule, sur toute la hauteur ;
+ *  - notes : les notes qui tombent et le clavier guide, sans portée.
  */
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { jouerClic, jouerNote, prechargerSons } from '@/audio/piano';
+import { jouerClic } from '@/audio/piano';
 import { BoutonMicro } from '@/components/BoutonMicro';
 import { Clavier } from '@/components/Clavier';
 import { Icone, NomIcone } from '@/components/Icones';
@@ -19,10 +20,10 @@ import { Bouton, Carte, Choix, Etoiles } from '@/components/ui';
 import { leconSuivante, trouverLecon } from '@/data/lecons';
 import { useMicro } from '@/hooks/useMicro';
 import { Bilan, useMoteurJeu } from '@/hooks/useMoteurJeu';
-import { nomDuree, nomEcrit } from '@/music/notes';
+import { nomEcrit } from '@/music/notes';
 import { calculerEtoiles, useProgression } from '@/store/Progression';
 import { useMidi, useNotesMidi } from '@/store/Midi';
-import { Entree, useReglages } from '@/store/Reglages';
+import { Affichage, useReglages } from '@/store/Reglages';
 import { revenir } from '@/utils/navigation';
 
 export default function EcranLecon() {
@@ -43,11 +44,10 @@ export default function EcranLecon() {
 function Jeu({ leconId }: { leconId: string }) {
   const lecon = trouverLecon(leconId)!;
   const { reglages, modifier, couleurs: c } = useReglages();
-  /** L'élève joue sur son vrai piano (écouté au micro) plutôt que sur l'écran. */
   const midi = useMidi();
   // Un clavier MIDI connecté remplace le micro : détection parfaite, accords compris
-  const surPiano = reglages.entree === 'piano' || !!midi.connecte;
-  const auMicro = reglages.entree === 'piano' && !midi.connecte;
+  const auMicro = !midi.connecte;
+  const vue = reglages.affichage;
   const { enregistrerPartie, progression } = useProgression();
   const { width, height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
@@ -96,30 +96,12 @@ function Jeu({ leconId }: { leconId: string }) {
     ignorerMicroRef.current = micro.ignorerUnInstant;
   }, [micro.ignorerUnInstant]);
 
-  useEffect(() => {
-    prechargerSons(lecon.clavierMin, lecon.clavierMax);
-  }, [lecon]);
-
-  // Sur un vrai piano, le micro s'allume tout seul à l'ouverture de la leçon
+  // Le micro s'allume tout seul à l'ouverture de la leçon
   const demarrerMicro = micro.demarrer;
   useEffect(() => {
     if (auMicro) demarrerMicro();
   }, [auMicro, demarrerMicro]);
   useNotesMidi((m) => jouer(m, 'midi'));
-
-  // Appui sur le clavier à l'écran
-  const son = reglages.son;
-  const ignorerMicro = micro.ignorerUnInstant;
-  const onAppui = useCallback(
-    (midi: number) => {
-      if (son) {
-        jouerNote(midi);
-        ignorerMicro(); // ne pas « entendre » notre propre son au micro
-      }
-      jouer(midi, 'ecran');
-    },
-    [son, ignorerMicro, jouer],
-  );
 
   const basculerMicro = () => {
     if (micro.etat === 'actif') micro.arreter();
@@ -134,13 +116,21 @@ function Jeu({ leconId }: { leconId: string }) {
   /* ----- Mise en page (paysage) ----- */
   const L = width - insets.left - insets.right;
   const H = height - insets.top - insets.bottom;
-  const hClavier = Math.round(H * (lecon.cle === 'double' ? 0.28 : 0.33));
-  // La grande portée (deux mains) a besoin de plus de hauteur
-  const hBandeau = Math.round(Math.max(96, H * (lecon.cle === 'double' ? 0.46 : 0.3)));
-  const hChute = Math.max(60, H - hClavier - hBandeau);
+  const avecPortee = vue !== 'chute';
+  const avecChute = vue !== 'partition';
+  const hClavier = avecChute ? Math.round(H * (lecon.cle === 'double' && avecPortee ? 0.28 : 0.33)) : 0;
+  // La grande portée (deux mains) a besoin de plus de hauteur ; sans portée, une simple barre
+  const hBandeau = !avecChute
+    ? H
+    : avecPortee
+      ? Math.round(Math.max(96, H * (lecon.cle === 'double' ? 0.46 : 0.3)))
+      : 60;
+  const hChute = avecChute ? Math.max(60, H - hClavier - hBandeau) : 0;
   const tempsVisibles = Math.min(4, Math.max(2, hChute / 55));
-  const largeurCote = Math.min(220, L * 0.24);
-  const largeurPortee = L - largeurCote * 2 - 16;
+  // Vue « partition » : colonnes étroites et plusieurs lignes de portée
+  const largeurCote = avecChute ? Math.min(220, L * 0.24) : Math.min(150, L * 0.17);
+  const largeurPortee = avecPortee ? L - largeurCote * 2 - 16 : 0;
+  const nbLignes = avecChute ? 1 : Math.max(1, Math.floor((hBandeau - 14) / (lecon.cle === 'double' ? 170 : 105)));
 
   // État de chaque note sur la portée
   const { etats, groupe } = moteur;
@@ -166,11 +156,10 @@ function Jeu({ leconId }: { leconId: string }) {
     couleurMessage = moteur.retour.type === 'ok' ? c.succes : c.erreur;
   }
   if (enJeu && moteur.enAttente && attendues.length && moteur.retour?.type !== 'erreur') {
-    const ou = surPiano ? ' sur ton piano' : '';
     const noms = attendues.map((n) => nomEcrit(n)).join(' + ');
     message = reglages.nomsNotes
-      ? `Joue ${noms}${ou} !`
-      : `À toi${ou} ! ${attendues.length > 1 ? 'Quelles sont ces notes ?' : 'Quelle est cette note ?'}`;
+      ? `Joue ${noms} !`
+      : `À toi ! ${attendues.length > 1 ? 'Quelles sont ces notes ?' : 'Quelle est cette note ?'}`;
     couleurMessage = c.primaire;
   }
 
@@ -193,34 +182,46 @@ function Jeu({ leconId }: { leconId: string }) {
     >
       {/* ---------- Bandeau du haut ---------- */}
       <View style={[styles.bandeau, { height: hBandeau }]}>
-        <View style={[styles.cote, { width: largeurCote }]}>
+        <View style={[styles.cote, avecPortee ? { width: largeurCote } : styles.coteSouple]}>
           <View style={styles.ligne}>
             <BoutonRond icone="retour" onPress={() => revenir()} accessibilityLabel="Retour au menu" />
             <Text style={[styles.titre, { color: c.texte }]} numberOfLines={2}>
               {lecon.titre}
             </Text>
           </View>
-          <Text style={[styles.message, { color: couleurMessage }]} numberOfLines={2}>
+          {avecPortee && (
+            <Text style={[styles.message, { color: couleurMessage }]} numberOfLines={2}>
+              {message}
+            </Text>
+          )}
+        </View>
+
+        {avecPortee ? (
+          <View style={[styles.portee, { backgroundColor: c.surface, borderColor: c.bordure }]}>
+            {Array.from({ length: nbLignes }, (_, k) => (
+              <Portee
+                key={k}
+                cle={lecon.cle}
+                armure={lecon.armure}
+                mesure={lecon.mesure}
+                elements={lecon.partition}
+                tempsActuel={tempsActuel}
+                statut={statut}
+                dureeTotale={lecon.dureeTotale}
+                largeur={largeurPortee}
+                hauteur={Math.floor((hBandeau - 14) / nbLignes)}
+                afficherNoms={reglages.nomsNotes}
+                ligne={avecChute ? undefined : k}
+              />
+            ))}
+          </View>
+        ) : (
+          <Text style={[styles.message, styles.messageBarre, { color: couleurMessage }]} numberOfLines={1}>
             {message}
           </Text>
-        </View>
+        )}
 
-        <View style={[styles.portee, { backgroundColor: c.surface, borderColor: c.bordure }]}>
-          <Portee
-            cle={lecon.cle}
-            armure={lecon.armure}
-            mesure={lecon.mesure}
-            elements={lecon.partition}
-            tempsActuel={tempsActuel}
-            statut={statut}
-            dureeTotale={lecon.dureeTotale}
-            largeur={largeurPortee}
-            hauteur={hBandeau - 14}
-            afficherNoms={reglages.nomsNotes}
-          />
-        </View>
-
-        <View style={[styles.cote, styles.coteDroit, { width: largeurCote }]}>
+        <View style={[styles.cote, styles.coteDroit, avecPortee && { width: largeurCote }]}>
           <View style={styles.ligne}>
             <BoutonMicro
               etat={micro.etat}
@@ -232,67 +233,50 @@ function Jeu({ leconId }: { leconId: string }) {
             <BoutonRond
               icone={moteur.phase === 'pause' ? 'lecture' : 'pause'}
               onPress={moteur.basculerPause}
-              accessibilityLabel="Pause"
+              accessibilityLabel="Pause et options"
               desactive={moteur.phase !== 'enCours' && moteur.phase !== 'pause'}
             />
           </View>
-          <Pressable
-            onPress={() => setModeAttente((m) => !m)}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: modeAttente }}
-            style={[styles.pastille, { backgroundColor: modeAttente ? c.primaire : c.surfaceAlt }]}
-          >
-            <Text style={{ color: modeAttente ? c.surPrimaire : c.texte, fontWeight: '700' }}>
-              Attente : {modeAttente ? 'oui' : 'non'}
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setMetronome((m) => !m)}
-            accessibilityRole="switch"
-            accessibilityState={{ checked: metronome }}
-            style={[styles.pastille, { backgroundColor: metronome ? c.primaire : c.surfaceAlt }]}
-          >
-            <Text style={{ color: metronome ? c.surPrimaire : c.texte, fontWeight: '700' }}>
-              Métronome : {metronome ? 'oui' : 'non'}
-            </Text>
-          </Pressable>
         </View>
       </View>
 
-      {/* ---------- Notes qui tombent ---------- */}
-      <View style={styles.centreH}>
-        <NotesQuiTombent
-          notes={lecon.notes}
-          etats={moteur.etats}
-          groupe={moteur.groupe}
-          temps={moteur.temps}
-          min={lecon.clavierMin}
-          max={lecon.clavierMax}
-          largeur={L}
-          hauteur={hChute}
-          tempsVisibles={tempsVisibles}
-          afficherNoms={reglages.nomsNotes}
-        />
-        {/* Décompte : une mesure avant la première note */}
-        {enJeu && moteur.temps < 0 && (
-          <View style={styles.decompte} pointerEvents="none">
-            <Text style={[styles.chiffreDecompte, { color: c.texte }]}>{Math.ceil(-moteur.temps)}</Text>
+      {avecChute && (
+        <>
+          {/* ---------- Notes qui tombent ---------- */}
+          <View style={styles.centreH}>
+            <NotesQuiTombent
+              notes={lecon.notes}
+              etats={moteur.etats}
+              groupe={moteur.groupe}
+              temps={moteur.temps}
+              min={lecon.clavierMin}
+              max={lecon.clavierMax}
+              largeur={L}
+              hauteur={hChute}
+              tempsVisibles={tempsVisibles}
+              afficherNoms={reglages.nomsNotes}
+            />
           </View>
-        )}
-      </View>
 
-      {/* ---------- Clavier ---------- */}
-      <Clavier
-        min={lecon.clavierMin}
-        max={lecon.clavierMax}
-        largeur={L}
-        hauteur={hClavier}
-        onAppui={onAppui}
-        surbrillance={enJeu ? attendues : []}
-        retour={moteur.retour}
-        afficherNoms={reglages.nomsNotes}
-        interactif={!surPiano}
-      />
+          {/* ---------- Clavier guide : où poser les doigts ---------- */}
+          <Clavier
+            min={lecon.clavierMin}
+            max={lecon.clavierMax}
+            largeur={L}
+            hauteur={hClavier}
+            surbrillance={enJeu ? attendues : []}
+            retour={moteur.retour}
+            afficherNoms={reglages.nomsNotes}
+          />
+        </>
+      )}
+
+      {/* Décompte : une mesure avant la première note */}
+      {enJeu && moteur.temps < 0 && (
+        <View style={styles.decompte} pointerEvents="none">
+          <Text style={[styles.chiffreDecompte, { color: c.texte }]}>{Math.ceil(-moteur.temps)}</Text>
+        </View>
+      )}
 
       {/* ---------- Écrans superposés : départ, pause, résultat ---------- */}
       {moteur.phase === 'pret' && (
@@ -300,28 +284,20 @@ function Jeu({ leconId }: { leconId: string }) {
           <Text style={[styles.grandTitre, { color: c.texte }]}>{lecon.titre}</Text>
           <Text style={[styles.texte, { color: c.texte }]}>{lecon.description}</Text>
           <Text style={[styles.petit, { color: c.texteDiscret }]}>
-            {lecon.cle === 'double' ? 'Grande portée · deux mains' : `${lecon.cle === 'sol' ? 'Clé de sol' : 'Clé de fa'} · main ${lecon.main}`} ·{' '}
-            {lecon.mesure.temps}/{lecon.mesure.unite} · {lecon.notes.length} notes ·
-            tempo {Math.round(lecon.tempo * reglages.vitesse)}
-            {modeAttente ? ' · le morceau t’attend' : ' · joue en rythme !'}
+            {lecon.cle === 'double' ? 'Deux mains' : lecon.cle === 'sol' ? 'Clé de sol' : 'Clé de fa'} · {lecon.mesure.temps}/
+            {lecon.mesure.unite} · tempo {Math.round(lecon.tempo * reglages.vitesse)}
           </Text>
-          <Legende />
-          <Text style={[styles.petit, { color: c.texte, fontWeight: '700' }]}>Je joue :</Text>
-          <Choix<Entree>
-            options={[
-              { valeur: 'piano', libelle: 'sur mon piano' },
-              { valeur: 'ecran', libelle: 'sur l’écran' },
-            ]}
-            valeur={reglages.entree}
-            onChange={(v) => modifier({ entree: v })}
+          <Options
+            vue={vue}
+            onVue={(v) => modifier({ affichage: v })}
+            attente={modeAttente}
+            onAttente={() => setModeAttente((m) => !m)}
+            metronome={metronome}
+            onMetronome={() => setMetronome((m) => !m)}
           />
-          {auMicro && (
-            <Text style={[styles.petit, { color: micro.etat === 'actif' ? c.succes : c.texteDiscret }]}>
-              {micro.etat === 'actif'
-                ? 'Micro prêt ! Pose le téléphone sur le pupitre et joue sur ton piano. Le clavier de l’écran te montre seulement où poser les doigts.'
-                : micro.etat === 'refuse' || micro.etat === 'erreur'
-                  ? 'Le micro n’est pas disponible : autorise-le dans les réglages du téléphone, puis touche « Micro ».'
-                  : 'Activation du micro…'}
+          {auMicro && (micro.etat === 'refuse' || micro.etat === 'erreur') && (
+            <Text style={[styles.petit, { color: c.erreur }]}>
+              Micro indisponible : autorise-le dans les réglages du téléphone.
             </Text>
           )}
           <View style={styles.boutons}>
@@ -334,6 +310,14 @@ function Jeu({ leconId }: { leconId: string }) {
       {moteur.phase === 'pause' && (
         <Superpose>
           <Text style={[styles.grandTitre, { color: c.texte }]}>Pause</Text>
+          <Options
+            vue={vue}
+            onVue={(v) => modifier({ affichage: v })}
+            attente={modeAttente}
+            onAttente={() => setModeAttente((m) => !m)}
+            metronome={metronome}
+            onMetronome={() => setMetronome((m) => !m)}
+          />
           <View style={styles.boutons}>
             <Bouton titre="Reprendre" onPress={moteur.basculerPause} />
             <Bouton titre="Recommencer" variante="secondaire" onPress={moteur.demarrer} />
@@ -341,7 +325,6 @@ function Jeu({ leconId }: { leconId: string }) {
           </View>
         </Superpose>
       )}
-
       {moteur.phase === 'termine' && resultat && (
         <Superpose>
           <Text style={[styles.grandTitre, { color: c.texte }]}>
@@ -392,13 +375,54 @@ function Superpose({ children }: { children: React.ReactNode }) {
   );
 }
 
-/** Rappel des durées de notes pour les débutants. */
-function Legende() {
+/** Choix de la vue, mode attente et métronome (avant de jouer et en pause). */
+function Options({
+  vue,
+  onVue,
+  attente,
+  onAttente,
+  metronome,
+  onMetronome,
+}: {
+  vue: Affichage;
+  onVue: (v: Affichage) => void;
+  attente: boolean;
+  onAttente: () => void;
+  metronome: boolean;
+  onMetronome: () => void;
+}) {
+  return (
+    <View style={styles.options}>
+      <Choix<Affichage>
+        options={[
+          { valeur: 'les-deux', libelle: 'Partition + notes' },
+          { valeur: 'partition', libelle: 'Partition' },
+          { valeur: 'chute', libelle: 'Notes' },
+        ]}
+        valeur={vue}
+        onChange={onVue}
+      />
+      <View style={styles.ligne}>
+        <Interrupteur libelle="Attente" actif={attente} onPress={onAttente} />
+        <Interrupteur libelle="Métronome" actif={metronome} onPress={onMetronome} />
+      </View>
+    </View>
+  );
+}
+
+function Interrupteur({ libelle, actif, onPress }: { libelle: string; actif: boolean; onPress: () => void }) {
   const c = useReglages().couleurs;
   return (
-    <Text style={[styles.petit, { color: c.texteDiscret }]}>
-      Rappel : {[4, 2, 1, 0.5].map((d) => `${nomDuree(d)} = ${d === 0.5 ? '½' : d} temps`).join(' · ')}
-    </Text>
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: actif }}
+      style={[styles.pastille, { backgroundColor: actif ? c.primaire : c.surfaceAlt }]}
+    >
+      <Text style={{ color: actif ? c.surPrimaire : c.texte, fontWeight: '700' }}>
+        {libelle} : {actif ? 'oui' : 'non'}
+      </Text>
+    </Pressable>
   );
 }
 
@@ -438,6 +462,9 @@ const styles = StyleSheet.create({
   centreH: { alignItems: 'center' },
   bandeau: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 4, gap: 8 },
   cote: { justifyContent: 'center', gap: 6 },
+  coteSouple: { flexShrink: 1 },
+  messageBarre: { flex: 1, textAlign: 'center' },
+  options: { alignItems: 'center', gap: 10 },
   coteDroit: { alignItems: 'flex-end' },
   ligne: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   titre: { fontSize: 16, fontWeight: '800', flexShrink: 1 },

@@ -57,4 +57,17 @@ assert.equal(accords.partition.find((e) => e.main === 'gauche')!.portee, 'fa');
 assert.equal(trouverLecon('n5-l3')!.armure, 1);
 assert.equal(trouverLecon('n5-l4')!.notes[3].alteration, -1);
 
+// Pièces du niveau 8 : mesures complètes, main gauche écrite en clé de sol, voix secondaires sans silences dessinés
+const elise = trouverLecon('n8-l5')!;
+assert.equal(elise.tempsParMesure, 1.5);
+assert.equal(elise.dureeTotale, 188); // les triolets ne décalent pas la fin
+assert.ok(elise.partition.some((e) => e.main === 'gauche' && e.portee === 'sol'));
+const gymno = trouverLecon('n8-l3')!;
+const silencesGauche = gymno.partition.filter((e) => e.main === 'gauche' && e.tetes.length === 0).length;
+assert.ok(silencesGauche < 20, `${silencesGauche} silences`);
+for (const id of ['n8-l1', 'n8-l2', 'n8-l3', 'n8-l4']) {
+  const l = trouverLecon(id)!;
+  // Chaque groupe commence sur une subdivision régulière (pas d'erreur d'arrondi)
+  for (const g of l.groupes) assert.ok(Math.abs(g.debut * 8 - Math.round(g.debut * 8)) < 1e-6, `${id} ${g.debut}`);
+}
 console.log('lecons : OK');

@@ -1,12 +1,11 @@
 /**
- * Piano libre : on joue ce qu'on veut (à l'écran ou au micro) et l'appli
+ * Piano libre : on joue ce qu'on veut sur son piano (micro ou clavier MIDI) et l'appli
  * montre le nom de la note et sa place sur la portée. Idéal pour explorer.
  */
 import React, { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { jouerNote, prechargerSons } from '@/audio/piano';
 import { BoutonMicro } from '@/components/BoutonMicro';
 import { Clavier } from '@/components/Clavier';
 import { Icone } from '@/components/Icones';
@@ -28,10 +27,6 @@ export default function PianoLibre() {
   const [debut, setDebut] = useState(48);
   const [historique, setHistorique] = useState<number[]>([]);
 
-  useEffect(() => {
-    prechargerSons(debut, debut + 24);
-  }, [debut]);
-
   const ajouter = useCallback((midi: number) => {
     setHistorique((h) => [...h.slice(-7), midi]);
     // Le clavier affiché suit la note jouée sur le vrai piano
@@ -39,8 +34,7 @@ export default function PianoLibre() {
   }, []);
 
   const midi = useMidi();
-  const surPiano = reglages.entree === 'piano' || !!midi.connecte;
-  const auMicro = reglages.entree === 'piano' && !midi.connecte;
+  const auMicro = !midi.connecte;
   // Au micro, seule la note la plus forte de chaque frappe s'affiche
   const micro = useMicro({ onNotes: (midis) => ajouter(midis[0]) });
 
@@ -50,19 +44,6 @@ export default function PianoLibre() {
     if (auMicro) demarrerMicro();
   }, [auMicro, demarrerMicro]);
   useNotesMidi(ajouter);
-  const ignorerMicro = micro.ignorerUnInstant;
-  const son = reglages.son;
-
-  const onAppui = useCallback(
-    (midi: number) => {
-      if (son) {
-        jouerNote(midi);
-        ignorerMicro();
-      }
-      ajouter(midi);
-    },
-    [son, ajouter, ignorerMicro],
-  );
 
   const derniere = historique[historique.length - 1];
   // Clé choisie selon la dernière note : grave → clé de fa
@@ -122,7 +103,7 @@ export default function PianoLibre() {
           <Text style={[styles.nom, { color: derniere !== undefined ? couleurNote(derniere).texte : c.texteDiscret }]}>
             {derniere !== undefined ? nomEcrit(ecrireMidi(derniere)) : '?'}
           </Text>
-          <Text style={{ color: derniere !== undefined ? couleurNote(derniere).texte : c.texteDiscret, fontWeight: '700', textAlign: 'center', paddingHorizontal: 8 }}>{derniere !== undefined ? (cle === 'sol' ? 'clé de sol' : 'clé de fa') : surPiano ? 'Joue une note sur ton piano' : 'Joue une note'}</Text>
+          <Text style={{ color: derniere !== undefined ? couleurNote(derniere).texte : c.texteDiscret, fontWeight: '700', textAlign: 'center', paddingHorizontal: 8 }}>{derniere !== undefined ? (cle === 'sol' ? 'clé de sol' : 'clé de fa') : 'Joue une note sur ton piano'}</Text>
         </View>
 
         <View style={[styles.portee, { backgroundColor: c.surface, borderColor: c.bordure }]}>
@@ -145,10 +126,8 @@ export default function PianoLibre() {
         max={debut + 24}
         largeur={L}
         hauteur={hClavier}
-        onAppui={onAppui}
         afficherNoms={reglages.nomsNotes}
         surbrillance={derniere !== undefined ? [{ midi: derniere }] : []}
-        interactif={!surPiano}
       />
     </View>
   );

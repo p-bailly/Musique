@@ -12,13 +12,18 @@ import niveau3 from './niveaux/niveau3.json';
 import niveau4 from './niveaux/niveau4.json';
 import niveau5 from './niveaux/niveau5.json';
 import niveau6 from './niveaux/niveau6.json';
+import niveau7 from './niveaux/niveau7.json';
+import niveau8 from './niveaux/niveau8.json';
 
 /* ---------- Format des fichiers JSON ---------- */
 
 export type Main = 'droite' | 'gauche';
 
 interface NoteJSON {
-  /** « Do4 », « Sib3 », un accord « Do4+Mi4+Sol4 », ou « silence ». */
+  /**
+   * « Do4 », « Sib3 », un accord « Do4+Mi4+Sol4 », « silence », ou « espace » (un silence
+   * qu'on ne dessine pas, pour placer une deuxième voix de la même main).
+   */
   note: string;
   /** Durée en temps : 4 = ronde, 2 = blanche, 1 = noire, 0.5 = croche. */
   duree: number;
@@ -30,6 +35,8 @@ interface NoteJSON {
   nuance?: string;
   /** Liée à la note suivante de même hauteur : celle-ci prolonge le son, on ne la rejoue pas. */
   lie?: boolean;
+  /** Portée où l'écrire sur la grande portée (« sol » ou « fa »), si ce n'est pas celle de sa main. */
+  portee?: string;
 }
 
 interface VoixJSON {
@@ -153,6 +160,11 @@ function plageClavier(midis: number[]): [number, number] {
 
 const EPSILON = 1e-6;
 
+/** Temps suivant, arrondi au 1/192e de noire : les triolets (1/6, 1/3) ne cumulent pas d'erreur. */
+function avancer(t: number, duree: number): number {
+  return Math.round((t + duree) * 192) / 192;
+}
+
 /** Transforme une leçon JSON en leçon prête à jouer (temps de départ, accords, liaisons). */
 export function compilerLecon(json: LeconJSON, niveau: number): Lecon {
   const mainLecon: Main = json.main === 'gauche' ? 'gauche' : 'droite';
@@ -168,7 +180,12 @@ export function compilerLecon(json: LeconJSON, niveau: number): Lecon {
     let t = 0;
     for (const n of v.notes) {
       const main: Main = n.main === 'gauche' ? 'gauche' : n.main === 'droite' ? 'droite' : mainVoix;
-      const portee: Cle = cle === 'double' ? (main === 'gauche' ? 'fa' : 'sol') : cle;
+      const portee: Cle =
+        cle !== 'double' ? cle : n.portee === 'sol' || n.portee === 'fa' ? n.portee : main === 'gauche' ? 'fa' : 'sol';
+      if (n.note.toLowerCase() === 'espace') {
+        t = avancer(t, n.duree);
+        continue;
+      }
       const silence = n.note.toLowerCase() === 'silence';
       const ecrites = silence ? [] : n.note.split('+').map(lireNote);
       const doigts = Array.isArray(n.doigt) ? n.doigt : n.doigt !== undefined ? [n.doigt] : [];
@@ -182,7 +199,7 @@ export function compilerLecon(json: LeconJSON, niveau: number): Lecon {
           .map((e, i) => ({ ...e, doigt: doigts[i], liee: !!n.lie, index: -1 }))
           .sort((a, b) => a.midi - b.midi),
       });
-      t += n.duree;
+      t = avancer(t, n.duree);
     }
     dureeTotale = Math.max(dureeTotale, t);
   }
@@ -262,7 +279,7 @@ export function compilerLecon(json: LeconJSON, niveau: number): Lecon {
   };
 }
 
-const SOURCES = [niveau1, niveau2, niveau3, niveau4, niveau5, niveau6] as NiveauJSON[];
+const SOURCES = [niveau1, niveau2, niveau3, niveau4, niveau5, niveau6, niveau7, niveau8] as NiveauJSON[];
 
 /** Tous les niveaux, dans l'ordre. */
 export const NIVEAUX: Niveau[] = SOURCES.map((n) => ({

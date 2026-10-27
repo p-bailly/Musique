@@ -1,6 +1,7 @@
 /**
- * Exercices sans clavier : tirage des notes des cartes flash (lecture) et de la
- * dictée musicale (oreille). Fonctions pures, testées dans scripts/tests.
+ * Exercices hors leçons : tirage des cartes flash (lecture), de la dictée musicale,
+ * de « plus aigu ou plus grave » et de « majeur ou mineur » (oreille).
+ * Fonctions pures, testées dans scripts/tests.
  */
 import { Cle, NoteEcrite, lireNote } from './notes';
 
@@ -71,6 +72,35 @@ export function tirerCle(cle: CleExercice, hasard = Math.random): Cle {
 }
 
 /** Identifiant d'un exercice pour les records (« lecture-sol-debutant », « dictee-gamme »). */
-export function idExercice(type: 'lecture' | 'dictee', ...options: string[]): string {
+export function idExercice(type: 'lecture' | 'dictee' | 'hauteur' | 'accord', ...options: string[]): string {
   return [type, ...options].join('-');
+}
+
+/* ---------- Oreille : plus aigu ou plus grave, majeur ou mineur ---------- */
+
+export type NiveauHauteur = 'facile' | 'difficile';
+export type TypeAccord = 'majeur' | 'mineur';
+
+export const LIBELLES_HAUTEUR: Record<NiveauHauteur, string> = {
+  facile: 'Notes éloignées',
+  difficile: 'Notes proches',
+};
+
+/**
+ * Deux notes différentes autour du Do central : la seconde est plus aiguë ou plus grave,
+ * de 5 à 12 demi-tons (facile) ou de 1 à 3 (difficile).
+ */
+export function tirerHauteur(niveau: NiveauHauteur, hasard = Math.random): { premiere: number; seconde: number } {
+  const [min, max] = niveau === 'facile' ? [5, 12] : [1, 3];
+  const ecart = min + Math.floor(hasard() * (max - min + 1));
+  const monte = hasard() < 0.5;
+  const premiere = 55 + Math.floor(hasard() * 13); // de Sol3 à Sol4
+  return { premiere, seconde: monte ? premiere + ecart : premiere - ecart };
+}
+
+/** Un accord parfait majeur (tierce de 4 demi-tons) ou mineur (3), fondamentale de Sol3 à Sol4. */
+export function tirerAccord(hasard = Math.random): { type: TypeAccord; notes: number[] } {
+  const type: TypeAccord = hasard() < 0.5 ? 'majeur' : 'mineur';
+  const fondamentale = 55 + Math.floor(hasard() * 13);
+  return { type, notes: [fondamentale, fondamentale + (type === 'majeur' ? 4 : 3), fondamentale + 7] };
 }
