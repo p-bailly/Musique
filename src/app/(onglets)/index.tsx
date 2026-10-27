@@ -13,7 +13,7 @@ import { Text } from '@/components/Texte';
 import { Etoiles, PastilleNote } from '@/components/ui';
 import { NIVEAUX, Lecon, TOUTES_LES_LECONS } from '@/data/lecons';
 import { NoteEcrite, nomEcrit } from '@/music/notes';
-import { useProgression } from '@/store/Progression';
+import { leconReussie, useProgression } from '@/store/Progression';
 import { useReglages } from '@/store/Reglages';
 import { ARC_EN_CIEL } from '@/theme/couleurs';
 
@@ -30,19 +30,22 @@ export default function Accueil() {
   const { couleurs: c, reglages, sombre } = useReglages();
   const { progression, serieActuelle } = useProgression();
 
+  /** Étoiles jaunes (avec attente) et bleues (sans attente, en rythme). */
   const etoiles = (id: string) => progression.lecons[id]?.meilleuresEtoiles ?? 0;
+  const etoilesBleues = (id: string) => progression.lecons[id]?.meilleuresEtoilesLibre ?? 0;
+  const reussie = (id: string) => leconReussie(progression.lecons[id]);
 
-  /** Une leçon est débloquée si la précédente a au moins une étoile. */
+  /** Une leçon est débloquée si la précédente a au moins une étoile (jaune ou bleue). */
   const estDebloquee = (lecon: Lecon) => {
     if (reglages.toutDebloquer) return true;
     const i = TOUTES_LES_LECONS.findIndex((l) => l.id === lecon.id);
-    return i === 0 || etoiles(TOUTES_LES_LECONS[i - 1].id) > 0;
+    return i === 0 || reussie(TOUTES_LES_LECONS[i - 1].id);
   };
 
-  const totalEtoiles = TOUTES_LES_LECONS.reduce((s, l) => s + etoiles(l.id), 0);
-  const leconsReussies = TOUTES_LES_LECONS.filter((l) => etoiles(l.id) > 0).length;
+  const totalEtoiles = TOUTES_LES_LECONS.reduce((s, l) => s + etoiles(l.id) + etoilesBleues(l.id), 0);
+  const leconsReussies = TOUTES_LES_LECONS.filter((l) => reussie(l.id)).length;
   // La prochaine leçon à jouer : la première ouverte sans étoile
-  const aJouer = TOUTES_LES_LECONS.find((l) => estDebloquee(l) && etoiles(l.id) === 0)?.id;
+  const aJouer = TOUTES_LES_LECONS.find((l) => estDebloquee(l) && !reussie(l.id))?.id;
   const niveauAJouer = NIVEAUX.find((n) => n.lecons.some((l) => l.id === aJouer))?.numero;
   // Niveaux ouverts : au départ, celui de la prochaine leçon
   const [ouverts, setOuverts] = useState<Set<number> | null>(null);
@@ -93,6 +96,7 @@ export default function Accueil() {
         {NIVEAUX.map((niveau) => {
           const ouvert = estOuvert(niveau.numero);
           const etoilesNiveau = niveau.lecons.reduce((s, l) => s + etoiles(l.id), 0);
+          const bleuesNiveau = niveau.lecons.reduce((s, l) => s + etoilesBleues(l.id), 0);
           return (
             <View key={niveau.numero} style={styles.niveau}>
               <Pressable
@@ -114,6 +118,7 @@ export default function Accueil() {
                   </Text>
                   <Text style={[styles.descNiveau, { color: c.texteDiscret }]}>
                     {niveau.lecons.length} leçons · {etoilesNiveau}/{niveau.lecons.length * 3} étoiles
+                    {bleuesNiveau ? ` · ${bleuesNiveau} bleue${bleuesNiveau > 1 ? 's' : ''}` : ''}
                   </Text>
                 </View>
                 <View
@@ -165,7 +170,10 @@ export default function Accueil() {
                               <Icone nom="lecture" taille={18} couleur={c.surPrimaire} />
                             </View>
                           ) : (
-                            <Etoiles nombre={etoiles(lecon.id)} />
+                            <View style={styles.colonneEtoiles}>
+                              <Etoiles nombre={etoiles(lecon.id)} />
+                              {etoilesBleues(lecon.id) > 0 && <Etoiles nombre={etoilesBleues(lecon.id)} bleues />}
+                            </View>
                           )}
                         </Pressable>
                       );
@@ -182,6 +190,7 @@ export default function Accueil() {
 }
 
 const styles = StyleSheet.create({
+  colonneEtoiles: { gap: 4, alignItems: 'flex-end' },
   ecran: { flex: 1 },
   contenu: { padding: 20, paddingBottom: 48 },
   arcEnCiel: { flexDirection: 'row', gap: 5, marginBottom: 14 },

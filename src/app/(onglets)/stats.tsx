@@ -7,7 +7,7 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { Carte, Etoiles } from '@/components/ui';
 import { NIVEAUX, TOUTES_LES_LECONS } from '@/data/lecons';
-import { jourLocal, useProgression } from '@/store/Progression';
+import { jourLocal, leconReussie, useProgression } from '@/store/Progression';
 import { useReglages } from '@/store/Reglages';
 import { ARC_EN_CIEL } from '@/theme/couleurs';
 
@@ -20,7 +20,8 @@ export default function Statistiques() {
   const { progression: p, serieActuelle } = useProgression();
 
   const totalEtoiles = TOUTES_LES_LECONS.reduce((s, l) => s + (p.lecons[l.id]?.meilleuresEtoiles ?? 0), 0);
-  const leconsReussies = TOUTES_LES_LECONS.filter((l) => (p.lecons[l.id]?.meilleuresEtoiles ?? 0) > 0).length;
+  const totalBleues = TOUTES_LES_LECONS.reduce((s, l) => s + (p.lecons[l.id]?.meilleuresEtoilesLibre ?? 0), 0);
+  const leconsReussies = TOUTES_LES_LECONS.filter((l) => leconReussie(p.lecons[l.id])).length;
   const essais = p.totaux.notesReussies + p.totaux.erreurs;
   const precision = essais ? Math.round((p.totaux.notesReussies / essais) * 100) : 0;
   const minutes = Math.round(p.totaux.secondesPratique / 60);
@@ -37,7 +38,8 @@ export default function Statistiques() {
   const tuiles = [
     { valeur: `${serieActuelle}`, legende: `jour${serieActuelle > 1 ? 's' : ''} d'affilée` },
     { valeur: `${p.serie.record}`, legende: 'record de série' },
-    { valeur: `${totalEtoiles}/${TOUTES_LES_LECONS.length * 3}`, legende: 'étoiles' },
+    { valeur: `${totalEtoiles}/${TOUTES_LES_LECONS.length * 3}`, legende: 'étoiles jaunes (attente)' },
+    { valeur: `${totalBleues}/${TOUTES_LES_LECONS.length * 3}`, legende: 'étoiles bleues (rythme)' },
     { valeur: `${leconsReussies}/${TOUTES_LES_LECONS.length}`, legende: 'leçons réussies' },
     { valeur: `${precision} %`, legende: 'précision' },
     { valeur: `${minutes} min`, legende: 'de pratique' },
@@ -83,9 +85,16 @@ export default function Statistiques() {
               <View key={l.id} style={[styles.ligneLecon, { borderColor: c.bordure }]}>
                 <Text style={{ color: c.texte, fontSize: 16, flex: 1 }}>{l.titre}</Text>
                 <Text style={{ color: c.texteDiscret, fontSize: 13, marginRight: 10 }}>
-                  {r ? `${Math.round(r.meilleurePrecision * 100)} % · ${r.parties} partie${r.parties > 1 ? 's' : ''}` : '—'}
+                  {r
+                    ? `${Math.round(r.meilleurePrecision * 100)} %${
+                        r.meilleurRythme ? ` · rythme ${Math.round(r.meilleurRythme * 100)} %` : ''
+                      } · ${r.parties} partie${r.parties > 1 ? 's' : ''}`
+                    : '—'}
                 </Text>
-                <Etoiles nombre={r?.meilleuresEtoiles ?? 0} taille={16} />
+                <View style={{ gap: 3, alignItems: 'flex-end' }}>
+                  <Etoiles nombre={r?.meilleuresEtoiles ?? 0} taille={16} />
+                  {(r?.meilleuresEtoilesLibre ?? 0) > 0 && <Etoiles nombre={r!.meilleuresEtoilesLibre!} taille={16} bleues />}
+                </View>
               </View>
             );
           })}
