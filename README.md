@@ -3,7 +3,7 @@
 Application mobile (iOS et Android) pour **apprendre le solfège et le piano** quand on est grand débutant :
 lire les notes sur la portée et les jouer sur son vrai piano. Le téléphone, posé sur le pupitre, écoute au
 micro et vérifie chaque note (on peut aussi jouer sur un clavier MIDI ou sur le clavier de l'écran).
-30 leçons en 6 niveaux, cartes flash, dictée musicale, piano libre.
+31 leçons en 6 niveaux, cartes flash, dictée musicale, piano libre.
 
 React Native + Expo (SDK 58) · TypeScript · 100 % hors-ligne, sans compte ni serveur.
 
@@ -45,4 +45,4 @@ Les leçons sont des fichiers JSON dans `src/data/niveaux/` (format complet dans
 ## Crédits
 
 Sons de piano : *Salamander Grand Piano V3* d'Alexander Holm, licence
-[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Mélodies du domaine public.
+[CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Mélodies du domaine public, sauf *Comptine d'un autre été* de Yann Tiersen (arrangement simplifié du début).
