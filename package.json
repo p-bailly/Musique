@@ -37,7 +37,7 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
-    "test": "tsx scripts/tests/lecons.test.ts && tsx scripts/tests/exercices.test.ts",
+    "test": "tsx scripts/tests/lecons.test.ts && tsx scripts/tests/exercices.test.ts && tsx scripts/tests/moteur.test.ts",
     "sons": "node scripts/generate-sounds.js",
     "icones": "python3 scripts/generate-icons.py",
     "lint": "expo lint"

@@ -1,14 +1,20 @@
 /**
- * Suivi de progression : étoiles par leçon, série de jours consécutifs,
- * statistiques simples. Tout est stocké localement sur le téléphone.
+ * Suivi de progression : étoiles par leçon (jaunes en mode attente, bleues sans
+ * attente, en rythme), série de jours consécutifs, statistiques simples.
+ * Tout est stocké localement sur le téléphone.
  */
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { ecrire, lire } from './stockage';
 
 export interface ResultatLecon {
+  /** Étoiles jaunes : morceau joué en mode attente. */
   meilleuresEtoiles: number;
   meilleurePrecision: number;
   parties: number;
+  /** Étoiles bleues : morceau joué sans attente (justesse et rythme). */
+  meilleuresEtoilesLibre?: number;
+  /** Meilleur score de rythme sans attente (0 à 1). */
+  meilleurRythme?: number;
 }
 
 export interface Progression {
@@ -48,6 +54,11 @@ export function jourLocal(decalageJours = 0): string {
 /** Résultat d'une partie, envoyé à la fin d'une leçon. */
 export interface BilanPartie {
   leconId: string;
+  /** Joué avec le mode attente (étoiles jaunes) ou sans (étoiles bleues). */
+  attente: boolean;
+  /** Tout le morceau : un simple passage ne donne pas d'étoiles, seulement du temps de pratique. */
+  complet: boolean;
+  rythme: number | null;
   etoiles: number;
   precision: number;
   reussies: number;
@@ -76,8 +87,20 @@ export function ProgressionProvider({ children }: { children: React.ReactNode })
 
   const enregistrerPartie = useCallback((b: BilanPartie) => {
     setProgression((p) => {
-      const ancien = p.lecons[b.leconId] ?? { meilleuresEtoiles: 0, meilleurePrecision: 0, parties: 0 };
+      const ancien: ResultatLecon = p.lecons[b.leconId] ?? { meilleuresEtoiles: 0, meilleurePrecision: 0, parties: 0 };
       const aujourdhui = jourLocal();
+      const jours = { ...p.jours, [aujourdhui]: (p.jours[aujourdhui] ?? 0) + b.secondes / 60 };
+
+      // Passage travaillé : seulement le temps de pratique
+      if (!b.complet) {
+        const partielle: Progression = {
+          ...p,
+          totaux: { ...p.totaux, secondesPratique: p.totaux.secondesPratique + b.secondes },
+          jours,
+        };
+        ecrire(CLE, partielle);
+        return partielle;
+      }
 
       // Série de jours consécutifs : seulement si la leçon est réussie (≥ 1 étoile)
       let serie = p.serie;
@@ -89,11 +112,19 @@ export function ProgressionProvider({ children }: { children: React.ReactNode })
       const nouvelle: Progression = {
         lecons: {
           ...p.lecons,
-          [b.leconId]: {
-            meilleuresEtoiles: Math.max(ancien.meilleuresEtoiles, b.etoiles),
-            meilleurePrecision: Math.max(ancien.meilleurePrecision, b.precision),
-            parties: ancien.parties + 1,
-          },
+          [b.leconId]: b.attente
+            ? {
+                ...ancien,
+                meilleuresEtoiles: Math.max(ancien.meilleuresEtoiles, b.etoiles),
+                meilleurePrecision: Math.max(ancien.meilleurePrecision, b.precision),
+                parties: ancien.parties + 1,
+              }
+            : {
+                ...ancien,
+                meilleuresEtoilesLibre: Math.max(ancien.meilleuresEtoilesLibre ?? 0, b.etoiles),
+                meilleurRythme: Math.max(ancien.meilleurRythme ?? 0, b.rythme ?? 0),
+                parties: ancien.parties + 1,
+              },
         },
         serie,
         totaux: {
@@ -102,7 +133,7 @@ export function ProgressionProvider({ children }: { children: React.ReactNode })
           secondesPratique: p.totaux.secondesPratique + b.secondes,
           leconsTerminees: p.totaux.leconsTerminees + (b.etoiles > 0 ? 1 : 0),
         },
-        jours: { ...p.jours, [aujourdhui]: (p.jours[aujourdhui] ?? 0) + b.secondes / 60 },
+        jours,
         exercices: p.exercices ?? {},
       };
       ecrire(CLE, nouvelle);
@@ -156,6 +187,19 @@ export function useProgression(): ValeurContexte {
   const ctx = useContext(Contexte);
   if (!ctx) throw new Error('useProgression doit être utilisé dans <ProgressionProvider>');
   return ctx;
+}
+
+/** Une leçon est réussie (et débloque la suivante) avec au moins une étoile, jaune ou bleue. */
+export function leconReussie(r: ResultatLecon | undefined): boolean {
+  return (r?.meilleuresEtoiles ?? 0) > 0 || (r?.meilleuresEtoilesLibre ?? 0) > 0;
+}
+
+/**
+ * Score d'une partie sans attente : moyenne de la justesse (bonnes notes) et du rythme
+ * (notes jouées à temps), de 0 à 1.
+ */
+export function scoreLibre(precision: number, rythme: number): number {
+  return (precision + rythme) / 2;
 }
 
 /** Calcule les étoiles d'une partie selon la précision (0 à 1). */

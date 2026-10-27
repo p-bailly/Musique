@@ -4,13 +4,15 @@
  *  - les deux : la portée en haut, les notes qui tombent au milieu, le clavier guide en bas ;
  *  - partition : la portée seule, sur toute la hauteur ;
  *  - notes : les notes qui tombent et le clavier guide, sans portée.
+ * Avant de jouer : écouter la démo, choisir un passage (mesures), en boucle et en accélérant.
+ * Étoiles jaunes avec le mode attente, bleues sans (justesse et rythme).
  */
 import { router, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { jouerClic } from '@/audio/piano';
+import { jouerAccord, jouerClic, prechargerSons } from '@/audio/piano';
 import { Clavier } from '@/components/Clavier';
 import { EtatMidi } from '@/components/EtatMidi';
 import { Icone, NomIcone } from '@/components/Icones';
@@ -18,9 +20,9 @@ import { NotesQuiTombent } from '@/components/NotesQuiTombent';
 import { Portee, StatutTete } from '@/components/Portee';
 import { Bouton, Carte, Choix, Etoiles } from '@/components/ui';
 import { fenetreClavier, leconSuivante, trouverLecon } from '@/data/lecons';
-import { Bilan, useMoteurJeu } from '@/hooks/useMoteurJeu';
+import { Bilan, libelleRythme, Passage, useMoteurJeu } from '@/hooks/useMoteurJeu';
 import { nomEcrit } from '@/music/notes';
-import { calculerEtoiles, useProgression } from '@/store/Progression';
+import { calculerEtoiles, leconReussie, scoreLibre, useProgression } from '@/store/Progression';
 import { useMidi, useNotesMidi } from '@/store/Midi';
 import { Affichage, TaillePartition, useReglages } from '@/store/Reglages';
 import { revenir } from '@/utils/navigation';
@@ -50,16 +52,32 @@ function Jeu({ leconId }: { leconId: string }) {
   const insets = useSafeAreaInsets();
 
   const [modeAttente, setModeAttente] = useState(lecon.attente ?? reglages.modeAttente);
-  const [resultat, setResultat] = useState<(Bilan & { etoiles: number }) | null>(null);
+  const [resultat, setResultat] = useState<(Bilan & { etoiles: number; attente: boolean }) | null>(null);
+
+  // Passage à travailler (numéros de mesure, à partir de 1)
+  const nbMesures = Math.max(1, Math.ceil(lecon.dureeTotale / lecon.tempsParMesure - 1e-6));
+  const [passageActif, setPassageActif] = useState(false);
+  const [mesures, setMesures] = useState<[number, number]>([1, Math.min(4, nbMesures)]);
+  const [boucle, setBoucle] = useState(true);
+  const [accelerer, setAccelerer] = useState(false);
+  const passage: Passage | null = passageActif
+    ? { debut: (mesures[0] - 1) * lecon.tempsParMesure, fin: mesures[1] * lecon.tempsParMesure }
+    : null;
 
   // Fin de partie : calcul des étoiles et sauvegarde
   const onFin = useCallback(
     (b: Bilan) => {
-      // En mode attente, on termine forcément : au moins 1 étoile
-      const etoiles = modeAttente ? Math.max(1, calculerEtoiles(b.precision)) : calculerEtoiles(b.precision);
-      setResultat({ ...b, etoiles });
+      // En mode attente, on termine forcément : au moins 1 étoile (jaune) ;
+      // sans attente, les étoiles (bleues) tiennent compte du rythme
+      const etoiles = modeAttente
+        ? Math.max(1, calculerEtoiles(b.precision))
+        : calculerEtoiles(scoreLibre(b.precision, b.rythme ?? 0));
+      setResultat({ ...b, etoiles, attente: modeAttente });
       enregistrerPartie({
         leconId: lecon.id,
+        attente: modeAttente,
+        complet: b.complet,
+        rythme: b.rythme,
         etoiles,
         precision: b.precision,
         reussies: b.reussies,
@@ -73,13 +91,28 @@ function Jeu({ leconId }: { leconId: string }) {
   // Métronome : clics pendant le décompte et, si on veut, pendant le morceau
   const [metronome, setMetronome] = useState(reglages.metronome);
   const onBattement = useCallback(
-    (numero: number, fort: boolean) => {
-      if (numero < 0 ? reglages.decompteAudible : metronome) jouerClic(fort);
+    (decompte: boolean, fort: boolean) => {
+      if (decompte ? reglages.decompteAudible : metronome) jouerClic(fort);
     },
     [metronome, reglages.decompteAudible],
   );
 
-  const moteur = useMoteurJeu({ lecon, vitesse: reglages.vitesse, modeAttente, onFin, onBattement });
+  const moteur = useMoteurJeu({
+    lecon,
+    vitesse: reglages.vitesse,
+    modeAttente,
+    passage,
+    boucle,
+    accelerer,
+    onFin,
+    onBattement,
+    onNotesDemo: jouerAccord,
+  });
+  const ecouter = () => {
+    prechargerSons(lecon.clavierMin, lecon.clavierMax);
+    moteur.ecouter();
+  };
+  const enBoucle = !!passage && boucle;
 
   // Le clavier MIDI transmet les touches enfoncées au moteur de jeu
   const jouer = moteur.jouer;
@@ -133,6 +166,10 @@ function Jeu({ leconId }: { leconId: string }) {
     message = moteur.retour.message;
     couleurMessage = moteur.retour.type === 'ok' ? c.succes : c.erreur;
   }
+  if (enJeu && moteur.demo) {
+    message = 'Démo : écoute !';
+    couleurMessage = c.primaire;
+  }
   if (enJeu && moteur.enAttente && attendues.length && moteur.retour?.type !== 'erreur') {
     const noms = attendues.map((n) => nomEcrit(n)).join(' + ');
     message = reglages.nomsNotes
@@ -142,8 +179,9 @@ function Jeu({ leconId }: { leconId: string }) {
   }
 
   const suivante = leconSuivante(lecon.id);
-  const suivanteOuverte =
-    !!suivante && (reglages.toutDebloquer || (progression.lecons[lecon.id]?.meilleuresEtoiles ?? 0) > 0);
+  const suivanteOuverte = !!suivante && (reglages.toutDebloquer || leconReussie(progression.lecons[lecon.id]));
+  // Passage en boucle : tour et vitesse, à côté du titre
+  const infoBoucle = enBoucle && !moteur.demo && moteur.phase !== 'pret' ? `Tour ${moteur.tour} · ${Math.round(moteur.facteur * 100)} %` : '';
 
   return (
     <View
@@ -165,6 +203,7 @@ function Jeu({ leconId }: { leconId: string }) {
             <BoutonRond icone="retour" onPress={() => revenir()} accessibilityLabel="Retour au menu" />
             <Text style={[styles.titre, { color: c.texte }]} numberOfLines={2}>
               {lecon.titre}
+              {infoBoucle ? `\n${infoBoucle}` : ''}
             </Text>
           </View>
           {avecPortee && (
@@ -244,9 +283,11 @@ function Jeu({ leconId }: { leconId: string }) {
       )}
 
       {/* Décompte : une mesure avant la première note */}
-      {enJeu && moteur.temps < 0 && (
+      {enJeu && moteur.temps < moteur.debutPassage && (
         <View style={styles.decompte} pointerEvents="none">
-          <Text style={[styles.chiffreDecompte, { color: c.texte }]}>{Math.ceil(-moteur.temps)}</Text>
+          <Text style={[styles.chiffreDecompte, { color: c.texte }]}>
+            {Math.ceil(moteur.debutPassage - moteur.temps - 1e-6)}
+          </Text>
         </View>
       )}
 
@@ -265,6 +306,17 @@ function Jeu({ leconId }: { leconId: string }) {
             metronome={metronome}
             onMetronome={() => setMetronome((m) => !m)}
           />
+          <ChoixPassage
+            actif={passageActif}
+            onActif={setPassageActif}
+            mesures={mesures}
+            onMesures={setMesures}
+            nbMesures={nbMesures}
+            boucle={boucle}
+            onBoucle={() => setBoucle((b) => !b)}
+            accelerer={accelerer}
+            onAccelerer={() => setAccelerer((a) => !a)}
+          />
           {!midi.connecte && (
             <Text style={[styles.petit, { color: c.erreur }]}>
               Aucun clavier MIDI : branche-le en USB ou connecte-le en Bluetooth dans les réglages.
@@ -272,6 +324,7 @@ function Jeu({ leconId }: { leconId: string }) {
           )}
           <View style={styles.boutons}>
             <Bouton titre="Commencer" onPress={moteur.demarrer} />
+            <Bouton titre="Écouter" variante="secondaire" onPress={ecouter} />
             <Bouton titre="Retour" variante="secondaire" onPress={() => revenir()} />
           </View>
         </Superpose>
@@ -279,7 +332,7 @@ function Jeu({ leconId }: { leconId: string }) {
 
       {moteur.phase === 'pause' && (
         <Superpose>
-          <Text style={[styles.grandTitre, { color: c.texte }]}>Pause</Text>
+          <Text style={[styles.grandTitre, { color: c.texte }]}>{moteur.demo ? 'Démo en pause' : 'Pause'}</Text>
           <Options
             attente={modeAttente}
             onAttente={() => setModeAttente((m) => !m)}
@@ -288,7 +341,12 @@ function Jeu({ leconId }: { leconId: string }) {
           />
           <View style={styles.boutons}>
             <Bouton titre="Reprendre" onPress={moteur.basculerPause} />
-            <Bouton titre="Recommencer" variante="secondaire" onPress={moteur.demarrer} />
+            {moteur.demo ? (
+              <Bouton titre="Arrêter la démo" variante="secondaire" onPress={moteur.arreter} />
+            ) : (
+              <Bouton titre="Recommencer" variante="secondaire" onPress={moteur.demarrer} />
+            )}
+            {enBoucle && !moteur.demo && <Bouton titre="Terminer" variante="secondaire" onPress={moteur.arreter} />}
             <Bouton titre="Quitter" variante="secondaire" onPress={() => revenir()} />
           </View>
         </Superpose>
@@ -304,12 +362,35 @@ function Jeu({ leconId }: { leconId: string }) {
                   ? 'Bien joué !'
                   : 'Continue, tu vas y arriver !'}
           </Text>
-          <Etoiles nombre={resultat.etoiles} taille={44} />
+          {resultat.complet ? (
+            <Etoiles nombre={resultat.etoiles} taille={44} bleues={!resultat.attente} />
+          ) : (
+            <Text style={[styles.petit, { color: c.texteDiscret }]}>
+              Passage : mesures {mesures[0]} à {mesures[1]}
+              {resultat.tours > 1 ? ` · ${resultat.tours} tours` : ''} · pas d’étoiles pour un passage
+            </Text>
+          )}
           <Text style={[styles.texte, { color: c.texte }]}>
-            Précision : {Math.round(resultat.precision * 100)} % · {pluriel(resultat.reussies, 'réussie')} ·{' '}
+            Justesse : {Math.round(resultat.precision * 100)} % · {pluriel(resultat.reussies, 'réussie')} ·{' '}
             {pluriel(resultat.erreurs, 'erreur')}
             {resultat.manquees ? ` · ${pluriel(resultat.manquees, 'manquée')}` : ''}
           </Text>
+          {resultat.rythme !== null && (
+            <Text style={[styles.texte, { color: c.texte }]}>
+              Rythme : {Math.round(resultat.rythme * 100)} %
+              {resultat.ecartMoyen !== null &&
+                ` · en moyenne ${libelleRythme(resultat.ecartMoyen).toLowerCase()}${
+                  Math.abs(resultat.ecartMoyen) > 0.08 ? ` (${Math.round(Math.abs(resultat.ecartMoyen) * 1000)} ms)` : ''
+                }`}
+            </Text>
+          )}
+          {resultat.complet && (
+            <Text style={[styles.petit, { color: c.texteDiscret }]}>
+              {resultat.attente
+                ? 'Étoiles jaunes : avec le mode attente. Sans attente, en rythme, tu gagnes des étoiles bleues.'
+                : 'Étoiles bleues : moyenne de la justesse et du rythme.'}
+            </Text>
+          )}
           <View style={styles.boutons}>
             <Bouton titre="Rejouer" variante="secondaire" onPress={moteur.demarrer} />
             {suivante && (
@@ -393,6 +474,81 @@ function Options({
   );
 }
 
+/** Passage à travailler : mesures de début et de fin, en boucle, en accélérant. */
+function ChoixPassage({
+  actif,
+  onActif,
+  mesures,
+  onMesures,
+  nbMesures,
+  boucle,
+  onBoucle,
+  accelerer,
+  onAccelerer,
+}: {
+  actif: boolean;
+  onActif: (v: boolean) => void;
+  mesures: [number, number];
+  onMesures: (m: [number, number]) => void;
+  nbMesures: number;
+  boucle: boolean;
+  onBoucle: () => void;
+  accelerer: boolean;
+  onAccelerer: () => void;
+}) {
+  const c = useReglages().couleurs;
+  const [de, a] = mesures;
+  return (
+    <View style={styles.options}>
+      <Choix<'tout' | 'passage'>
+        options={[
+          { valeur: 'tout', libelle: 'Tout le morceau' },
+          { valeur: 'passage', libelle: 'Un passage' },
+        ]}
+        valeur={actif ? 'passage' : 'tout'}
+        onChange={(v) => onActif(v === 'passage')}
+      />
+      {actif && (
+        <>
+          <View style={styles.ligne}>
+            <Text style={{ color: c.texte, fontWeight: '700' }}>Mesures</Text>
+            <Compteur valeur={de} min={1} max={nbMesures} onChange={(v) => onMesures([v, Math.max(v, a)])} />
+            <Text style={{ color: c.texte, fontWeight: '700' }}>à</Text>
+            <Compteur valeur={a} min={1} max={nbMesures} onChange={(v) => onMesures([Math.min(de, v), v])} />
+          </View>
+          <View style={styles.ligne}>
+            <Interrupteur libelle="En boucle" actif={boucle} onPress={onBoucle} />
+            {boucle && <Interrupteur libelle="Accélérer" actif={accelerer} onPress={onAccelerer} />}
+          </View>
+        </>
+      )}
+    </View>
+  );
+}
+
+/** Nombre avec boutons − et +. */
+function Compteur({ valeur, min, max, onChange }: { valeur: number; min: number; max: number; onChange: (v: number) => void }) {
+  const c = useReglages().couleurs;
+  const bouton = (signe: string, v: number) => (
+    <Pressable
+      onPress={() => onChange(v)}
+      disabled={v < min || v > max}
+      accessibilityRole="button"
+      accessibilityLabel={signe === '−' ? 'Moins' : 'Plus'}
+      style={[styles.compteurBouton, { backgroundColor: c.surfaceAlt, opacity: v < min || v > max ? 0.4 : 1 }]}
+    >
+      <Text style={{ color: c.texte, fontWeight: '900', fontSize: 18 }}>{signe}</Text>
+    </Pressable>
+  );
+  return (
+    <View style={styles.ligne}>
+      {bouton('−', valeur - 1)}
+      <Text style={{ color: c.texte, fontWeight: '900', fontSize: 18, minWidth: 28, textAlign: 'center' }}>{valeur}</Text>
+      {bouton('+', valeur + 1)}
+    </View>
+  );
+}
+
 function Interrupteur({ libelle, actif, onPress }: { libelle: string; actif: boolean; onPress: () => void }) {
   const c = useReglages().couleurs;
   return (
@@ -454,6 +610,7 @@ const styles = StyleSheet.create({
   message: { fontSize: 17, fontWeight: '800' },
   portee: { flex: 1, borderRadius: 12, borderWidth: 1, overflow: 'hidden', paddingVertical: 4 },
   pastille: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 999 },
+  compteurBouton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   rond: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   superpose: {
     ...StyleSheet.absoluteFill,

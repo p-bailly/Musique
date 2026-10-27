@@ -13,6 +13,8 @@ export interface Palette {
   succes: string;
   erreur: string;
   etoile: string;
+  /** Étoiles des morceaux joués sans attente, en rythme. */
+  etoileBleue: string;
   /** Clavier */
   toucheBlanche: string;
   toucheNoire: string;
@@ -38,6 +40,7 @@ export const clair: Palette = {
   succes: '#2E8A4A',
   erreur: '#C8323A',
   etoile: '#F2B21B',
+  etoileBleue: '#2F7DE1',
   toucheBlanche: '#FFFFFF',
   toucheNoire: '#1D1B16',
   texteToucheBlanche: '#3B372E',
@@ -60,6 +63,7 @@ export const sombre: Palette = {
   succes: '#4CB36C',
   erreur: '#E5585E',
   etoile: '#F5BE33',
+  etoileBleue: '#5AA2F5',
   toucheBlanche: '#F6F1E6',
   toucheNoire: '#0E0C09',
   texteToucheBlanche: '#3B372E',

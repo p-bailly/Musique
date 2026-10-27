@@ -52,13 +52,17 @@ export function Bouton({ titre, onPress, variante = 'primaire', petit, desactive
   );
 }
 
-/** Rangée de 3 étoiles (pleines ou vides). */
-export function Etoiles({ nombre, taille = 18 }: { nombre: number; taille?: number }) {
+/** Rangée de 3 étoiles (pleines ou vides) : jaunes avec le mode attente, bleues sans. */
+export function Etoiles({ nombre, taille = 18, bleues }: { nombre: number; taille?: number; bleues?: boolean }) {
   const c = useCouleurs();
+  const pleine = bleues ? c.etoileBleue : c.etoile;
   return (
-    <View style={styles.etoiles} accessibilityLabel={`${nombre} étoile${nombre > 1 ? 's' : ''} sur 3`}>
+    <View
+      style={styles.etoiles}
+      accessibilityLabel={`${nombre} étoile${nombre > 1 ? 's' : ''} ${bleues ? 'bleue' : 'jaune'}${nombre > 1 ? 's' : ''} sur 3`}
+    >
       {[1, 2, 3].map((i) => (
-        <Icone key={i} nom="etoile" taille={taille} couleur={i <= nombre ? c.etoile : c.bordure} />
+        <Icone key={i} nom="etoile" taille={taille} couleur={i <= nombre ? pleine : c.bordure} />
       ))}
     </View>
   );
