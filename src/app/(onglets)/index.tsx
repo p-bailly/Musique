@@ -1,7 +1,7 @@
 /**
- * Écran d'accueil : parcours de leçons par niveau (un menu déroulant par niveau,
- * celui de la prochaine leçon ouvert au départ), série de jours,
- * accès au piano libre, à la progression et aux réglages.
+ * Onglet « Leçons » (accueil) : parcours de leçons par niveau (un menu déroulant
+ * par niveau, celui de la prochaine leçon ouvert au départ) et série de jours.
+ * Piano libre, exercices, progression et réglages sont dans les autres onglets.
  */
 import { router } from 'expo-router';
 import React, { useState } from 'react';
@@ -10,7 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Icone } from '@/components/Icones';
 import { MiseAJour } from '@/components/MiseAJour';
 import { Text } from '@/components/Texte';
-import { Bouton, Etoiles, PastilleNote } from '@/components/ui';
+import { Etoiles, PastilleNote } from '@/components/ui';
 import { NIVEAUX, Lecon, TOUTES_LES_LECONS } from '@/data/lecons';
 import { NoteEcrite, nomEcrit } from '@/music/notes';
 import { useProgression } from '@/store/Progression';
@@ -88,39 +88,7 @@ export default function Accueil() {
           ))}
         </View>
 
-        <View style={styles.actions}>
-          <Bouton titre="Piano libre" onPress={() => router.push('/piano')} style={styles.actionPrincipale} />
-          <Bouton
-            titre="Progression"
-            variante="secondaire"
-            onPress={() => router.push('/stats')}
-            style={styles.action}
-          />
-          <Pressable
-            onPress={() => router.push('/reglages')}
-            accessibilityRole="button"
-            accessibilityLabel="Réglages"
-            style={({ pressed }) => [
-              styles.boutonIcone,
-              {
-                backgroundColor: c.surface,
-                borderColor: c.bordure,
-                opacity: pressed ? 0.75 : 1,
-              },
-            ]}
-          >
-            <Icone nom="reglages" couleur={c.texte} />
-          </Pressable>
-        </View>
-
         <MiseAJour compacte style={styles.miseAJour} />
-
-        <Bouton
-          titre="Exercices : lire et écouter"
-          variante="secondaire"
-          onPress={() => router.push('/exercices')}
-          style={styles.exercices}
-        />
 
         {NIVEAUX.map((niveau) => {
           const ouvert = estOuvert(niveau.numero);
@@ -223,18 +191,6 @@ const styles = StyleSheet.create({
   tuile: { flex: 1, padding: 12, borderRadius: 20 },
   tuileValeur: { fontSize: 28, fontWeight: '900' },
   tuileLegende: { fontSize: 13, fontWeight: '700' },
-  actions: { flexDirection: 'row', gap: 10, marginTop: 14 },
-  actionPrincipale: { flex: 1, paddingHorizontal: 10 },
-  action: { flex: 1, paddingHorizontal: 10 },
-  boutonIcone: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  exercices: { marginTop: 10 },
   miseAJour: { marginTop: 10 },
   niveau: { marginTop: 12 },
   enteteNiveau: {

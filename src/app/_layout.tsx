@@ -1,6 +1,7 @@
 /**
  * Mise en page racine : fournisseurs de contexte (réglages, progression)
- * et navigation en pile. Les écrans de piano sont en mode paysage.
+ * et navigation en pile : les onglets (groupe `(onglets)`), et par-dessus les
+ * exercices et les écrans de jeu (leçon, piano libre), plein écran et en paysage.
  */
 import {
   Nunito_600SemiBold,
@@ -36,10 +37,9 @@ function Navigation() {
           headerBackTitle: 'Retour',
         }}
       >
-        <Stack.Screen name="index" options={{ title: 'Solfège Piano', headerShown: false }} />
-        <Stack.Screen name="stats" options={{ title: 'Ma progression' }} />
-        <Stack.Screen name="reglages" options={{ title: 'Réglages' }} />
-        <Stack.Screen name="exercices/index" options={{ title: 'Exercices' }} />
+        {/* Barre d'onglets : Leçons, Exercices, Piano, Progression, Réglages */}
+        <Stack.Screen name="(onglets)" options={{ title: 'Solfège Piano', headerShown: false }} />
+        {/* Exercices : poussés par-dessus les onglets, avec en-tête et retour */}
         <Stack.Screen name="exercices/lecture" options={{ title: 'Cartes flash' }} />
         <Stack.Screen name="exercices/dictee" options={{ title: 'Quelle note ?' }} />
         <Stack.Screen name="exercices/oreille" options={{ title: 'Oreille' }} />
