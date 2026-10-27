@@ -5,7 +5,18 @@
 import React from 'react';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-export type NomIcone = 'retour' | 'lecture' | 'pause' | 'cadenas' | 'etoile' | 'reglages' | 'chevron';
+export type NomIcone =
+  | 'retour'
+  | 'lecture'
+  | 'pause'
+  | 'cadenas'
+  | 'etoile'
+  | 'reglages'
+  | 'chevron'
+  | 'lecons'
+  | 'exercices'
+  | 'piano'
+  | 'progression';
 
 export function Icone({ nom, taille = 22, couleur }: { nom: NomIcone; taille?: number; couleur: string }) {
   return (
@@ -35,6 +46,39 @@ export function Icone({ nom, taille = 22, couleur }: { nom: NomIcone; taille?: n
           <Circle cx={9} cy={7} r={2.6} fill={couleur} />
           <Circle cx={15} cy={17} r={2.6} fill={couleur} />
         </>
+      )}
+      {nom === 'lecons' && (
+        // Livre ouvert
+        <Path
+          d="M12 6.5C9.8 5 6.9 4.5 3.5 5v13.5c3.4-.5 6.3 0 8.5 1.5 2.2-1.5 5.1-2 8.5-1.5V5c-3.4-.5-6.3 0-8.5 1.5zM12 6.5V20"
+          stroke={couleur}
+          strokeWidth={2.2}
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          fill="none"
+        />
+      )}
+      {nom === 'exercices' && (
+        // Deux croches liées
+        <>
+          <Path d="M9 18V6l10-2.5V16" stroke={couleur} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+          <Circle cx={6.5} cy={18} r={2.8} fill={couleur} />
+          <Circle cx={16.5} cy={16} r={2.8} fill={couleur} />
+        </>
+      )}
+      {nom === 'piano' && (
+        // Clavier : quatre touches blanches, deux noires
+        <>
+          <Rect x={3} y={5} width={18} height={14} rx={2.5} stroke={couleur} strokeWidth={2.2} fill="none" />
+          <Path d="M12 13v6M16.5 5v14" stroke={couleur} strokeWidth={1.8} strokeLinecap="round" />
+          <Rect x={6.2} y={5} width={2.6} height={8} rx={0.8} fill={couleur} />
+          <Rect x={10.7} y={5} width={2.6} height={8} rx={0.8} fill={couleur} />
+          <Path d="M7.5 13v6" stroke={couleur} strokeWidth={1.8} strokeLinecap="round" />
+        </>
+      )}
+      {nom === 'progression' && (
+        // Histogramme
+        <Path d="M4 20h16M7 16.5v-4M12 16.5V6M17 16.5V10" stroke={couleur} strokeWidth={2.6} strokeLinecap="round" fill="none" />
       )}
       {nom === 'etoile' && (
         <Path d="M12 2.5l2.9 6.1 6.6.8-4.9 4.6 1.3 6.6L12 17.3l-5.9 3.3 1.3-6.6-4.9-4.6 6.6-.8z" fill={couleur} />
