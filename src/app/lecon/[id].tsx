@@ -1,24 +1,23 @@
 /**
- * Écran de jeu d'une leçon (en paysage), joué sur un vrai piano (micro ou clavier MIDI).
+ * Écran de jeu d'une leçon (en paysage), jouée sur un clavier MIDI.
  * Selon le réglage « Vue » :
  *  - les deux : la portée en haut, les notes qui tombent au milieu, le clavier guide en bas ;
  *  - partition : la portée seule, sur toute la hauteur ;
  *  - notes : les notes qui tombent et le clavier guide, sans portée.
  */
 import { router, useLocalSearchParams } from 'expo-router';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { jouerClic } from '@/audio/piano';
-import { BoutonMicro } from '@/components/BoutonMicro';
 import { Clavier } from '@/components/Clavier';
+import { EtatMidi } from '@/components/EtatMidi';
 import { Icone, NomIcone } from '@/components/Icones';
 import { NotesQuiTombent } from '@/components/NotesQuiTombent';
 import { Portee, StatutTete } from '@/components/Portee';
 import { Bouton, Carte, Choix, Etoiles } from '@/components/ui';
 import { fenetreClavier, leconSuivante, trouverLecon } from '@/data/lecons';
-import { useMicro } from '@/hooks/useMicro';
 import { Bilan, useMoteurJeu } from '@/hooks/useMoteurJeu';
 import { nomEcrit } from '@/music/notes';
 import { calculerEtoiles, useProgression } from '@/store/Progression';
@@ -45,8 +44,6 @@ function Jeu({ leconId }: { leconId: string }) {
   const lecon = trouverLecon(leconId)!;
   const { reglages, couleurs: c } = useReglages();
   const midi = useMidi();
-  // Un clavier MIDI connecté remplace le micro : détection parfaite, accords compris
-  const auMicro = !midi.connecte;
   const vue = reglages.affichage;
   const { enregistrerPartie, progression } = useProgression();
   const { width, height } = useWindowDimensions();
@@ -75,43 +72,18 @@ function Jeu({ leconId }: { leconId: string }) {
 
   // Métronome : clics pendant le décompte et, si on veut, pendant le morceau
   const [metronome, setMetronome] = useState(reglages.metronome);
-  const ignorerMicroRef = useRef<(ms?: number) => void>(() => {});
   const onBattement = useCallback(
     (numero: number, fort: boolean) => {
-      if (numero < 0 ? reglages.decompteAudible : metronome) {
-        jouerClic(fort);
-        ignorerMicroRef.current(150); // ne pas « entendre » le clic au micro
-      }
+      if (numero < 0 ? reglages.decompteAudible : metronome) jouerClic(fort);
     },
     [metronome, reglages.decompteAudible],
   );
 
   const moteur = useMoteurJeu({ lecon, vitesse: reglages.vitesse, modeAttente, onFin, onBattement });
 
-  // Le micro transmet les notes détectées au moteur de jeu
+  // Le clavier MIDI transmet les touches enfoncées au moteur de jeu
   const jouer = moteur.jouer;
-  const jouerMicro = moteur.jouerMicro;
-  const micro = useMicro({ onNotes: jouerMicro });
-  useEffect(() => {
-    ignorerMicroRef.current = micro.ignorerUnInstant;
-  }, [micro.ignorerUnInstant]);
-
-  // Le micro s'allume tout seul à l'ouverture de la leçon
-  const demarrerMicro = micro.demarrer;
-  useEffect(() => {
-    if (auMicro) demarrerMicro();
-  }, [auMicro, demarrerMicro]);
-  useNotesMidi((m) => jouer(m, 'midi'));
-
-  const basculerMicro = () => {
-    if (micro.etat === 'actif') micro.arreter();
-    else micro.demarrer();
-  };
-  useEffect(() => {
-    if (micro.etat === 'refuse') {
-      Alert.alert('Micro refusé', "Autorise l'accès au micro dans les réglages du téléphone pour jouer sur un vrai piano.");
-    }
-  }, [micro.etat]);
+  useNotesMidi(jouer);
 
   /* ----- Mise en page (paysage) ----- */
   const L = width - insets.left - insets.right;
@@ -229,13 +201,7 @@ function Jeu({ leconId }: { leconId: string }) {
 
         <View style={[styles.cote, styles.coteDroit, avecPortee && { width: largeurCote }]}>
           <View style={styles.ligne}>
-            <BoutonMicro
-              etat={micro.etat}
-              niveau={micro.niveau}
-              derniereNote={micro.derniereNote}
-              onPress={basculerMicro}
-              midi={midi.connecte}
-            />
+            <EtatMidi />
             <BoutonRond
               icone={moteur.phase === 'pause' ? 'lecture' : 'pause'}
               onPress={moteur.basculerPause}
@@ -299,9 +265,9 @@ function Jeu({ leconId }: { leconId: string }) {
             metronome={metronome}
             onMetronome={() => setMetronome((m) => !m)}
           />
-          {auMicro && (micro.etat === 'refuse' || micro.etat === 'erreur') && (
+          {!midi.connecte && (
             <Text style={[styles.petit, { color: c.erreur }]}>
-              Micro indisponible : autorise-le dans les réglages du téléphone.
+              Aucun clavier MIDI : branche-le en USB ou connecte-le en Bluetooth dans les réglages.
             </Text>
           )}
           <View style={styles.boutons}>

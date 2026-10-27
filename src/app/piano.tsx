@@ -1,18 +1,17 @@
 /**
- * Piano libre : on joue ce qu'on veut sur son piano (micro ou clavier MIDI) et l'appli
+ * Piano libre : on joue ce qu'on veut sur son clavier MIDI et l'appli
  * montre le nom de la note et sa place sur la portée. Idéal pour explorer.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { Text } from '@/components/Texte';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BoutonMicro } from '@/components/BoutonMicro';
+import { EtatMidi } from '@/components/EtatMidi';
 import { Clavier } from '@/components/Clavier';
 import { Icone } from '@/components/Icones';
 import { elementsSimples, Portee } from '@/components/Portee';
-import { useMicro } from '@/hooks/useMicro';
 import { Cle, DO_CENTRAL, ecrireMidi, nomEcrit } from '@/music/notes';
-import { useMidi, useNotesMidi } from '@/store/Midi';
+import { useNotesMidi } from '@/store/Midi';
 import { useReglages } from '@/store/Reglages';
 import { couleurNote } from '@/theme/couleurs';
 import { revenir } from '@/utils/navigation';
@@ -33,16 +32,6 @@ export default function PianoLibre() {
     setDebut((d) => (midi >= d && midi <= d + 24 ? d : DEBUTS.reduce((a, b) => (Math.abs(midi - 12 - b) < Math.abs(midi - 12 - a) ? b : a))));
   }, []);
 
-  const midi = useMidi();
-  const auMicro = !midi.connecte;
-  // Au micro, seule la note la plus forte de chaque frappe s'affiche
-  const micro = useMicro({ onNotes: (midis) => ajouter(midis[0]) });
-
-  // Sur un vrai piano, le micro s'allume tout seul
-  const demarrerMicro = micro.demarrer;
-  useEffect(() => {
-    if (auMicro) demarrerMicro();
-  }, [auMicro, demarrerMicro]);
   useNotesMidi(ajouter);
 
   const derniere = historique[historique.length - 1];
@@ -73,7 +62,7 @@ export default function PianoLibre() {
           >
             <Icone nom="retour" couleur={c.texte} />
           </Pressable>
-          <BoutonMicro etat={micro.etat} niveau={micro.niveau} derniereNote={micro.derniereNote} onPress={() => (micro.etat === 'actif' ? micro.arreter() : micro.demarrer())} midi={midi.connecte} />
+          <EtatMidi />
           <View style={styles.octaves}>
             {DEBUTS.map((d) => (
               <Pressable

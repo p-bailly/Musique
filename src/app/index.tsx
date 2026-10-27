@@ -208,9 +208,6 @@ export default function Accueil() {
             </View>
           );
         })}
-        <Text style={[styles.pied, { color: c.texteDiscret }]}>
-          Astuce : pose ton téléphone à l’horizontale sur le pupitre et joue sur ton piano, le micro t’écoute.
-        </Text>
       </ScrollView>
     </SafeAreaView>
   );

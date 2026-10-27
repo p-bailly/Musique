@@ -39,7 +39,6 @@ function Navigation() {
         <Stack.Screen name="index" options={{ title: 'Solfège Piano', headerShown: false }} />
         <Stack.Screen name="stats" options={{ title: 'Ma progression' }} />
         <Stack.Screen name="reglages" options={{ title: 'Réglages' }} />
-        <Stack.Screen name="calibration" options={{ title: 'Calibrer le micro' }} />
         <Stack.Screen name="exercices/index" options={{ title: 'Exercices' }} />
         <Stack.Screen name="exercices/lecture" options={{ title: 'Cartes flash' }} />
         <Stack.Screen name="exercices/dictee" options={{ title: 'Quelle note ?' }} />

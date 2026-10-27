@@ -1,8 +1,7 @@
 /**
- * Réglages : vue des leçons, vitesse des notes, mode attente, noms des notes,
+ * Réglages : clavier MIDI, vue des leçons, vitesse des notes, mode attente, noms des notes,
  * thème clair/sombre, déblocage des leçons, remise à zéro.
  */
-import { router } from 'expo-router';
 import React from 'react';
 import { Alert, Platform, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import { MiseAJour } from '@/components/MiseAJour';
@@ -50,29 +49,6 @@ export default function EcranReglages() {
   return (
     <ScrollView contentContainerStyle={styles.contenu}>
       <Carte style={styles.bloc}>
-        <Text style={[styles.titre, { color: c.texte }]}>Pendant les leçons, afficher…</Text>
-        <Choix<Affichage>
-          options={[
-            { valeur: 'les-deux', libelle: 'Partition + notes' },
-            { valeur: 'partition', libelle: 'La partition' },
-            { valeur: 'chute', libelle: 'Les notes qui tombent' },
-          ]}
-          valeur={reglages.affichage}
-          onChange={(v) => modifier({ affichage: v })}
-        />
-        <Text style={[styles.libelle, { color: c.texte }]}>Taille des notes sur la partition</Text>
-        <Choix<TaillePartition>
-          options={[
-            { valeur: 'petite', libelle: 'Petite' },
-            { valeur: 'moyenne', libelle: 'Moyenne' },
-            { valeur: 'grande', libelle: 'Grande' },
-          ]}
-          valeur={reglages.taillePartition}
-          onChange={(v) => modifier({ taillePartition: v })}
-        />
-      </Carte>
-
-      <Carte style={styles.bloc}>
         <Text style={[styles.titre, { color: c.texte }]}>Clavier MIDI</Text>
         {!midi.disponible ? (
           <Text style={{ color: c.texteDiscret, fontSize: 14 }}>
@@ -109,6 +85,29 @@ export default function EcranReglages() {
             {midi.erreur && <Text style={{ color: c.erreur, fontSize: 14 }}>{midi.erreur}</Text>}
           </>
         )}
+      </Carte>
+
+      <Carte style={styles.bloc}>
+        <Text style={[styles.titre, { color: c.texte }]}>Pendant les leçons, afficher…</Text>
+        <Choix<Affichage>
+          options={[
+            { valeur: 'les-deux', libelle: 'Partition + notes' },
+            { valeur: 'partition', libelle: 'La partition' },
+            { valeur: 'chute', libelle: 'Les notes qui tombent' },
+          ]}
+          valeur={reglages.affichage}
+          onChange={(v) => modifier({ affichage: v })}
+        />
+        <Text style={[styles.libelle, { color: c.texte }]}>Taille des notes sur la partition</Text>
+        <Choix<TaillePartition>
+          options={[
+            { valeur: 'petite', libelle: 'Petite' },
+            { valeur: 'moyenne', libelle: 'Moyenne' },
+            { valeur: 'grande', libelle: 'Grande' },
+          ]}
+          valeur={reglages.taillePartition}
+          onChange={(v) => modifier({ taillePartition: v })}
+        />
       </Carte>
 
       <Carte style={styles.bloc}>
@@ -170,17 +169,6 @@ export default function EcranReglages() {
           valeur={reglages.theme}
           onChange={(v) => modifier({ theme: v })}
         />
-      </Carte>
-
-      <Carte style={styles.bloc}>
-        <Text style={[styles.titre, { color: c.texte }]}>Jouer sur un vrai piano</Text>
-        <Text style={{ color: c.texteDiscret, fontSize: 15, lineHeight: 21 }}>
-          Pose le téléphone sur le pupitre de ton piano : le micro s’allume tout seul (le bouton « Micro » permet de le
-          couper). Il reconnaît les accords et les deux mains ensemble. L’octave n’est pas vérifiée au micro (seul le nom
-          de la note compte), et une note qui sonne comme l’harmonique d’une autre note de l’accord (son octave, par
-          exemple) est validée avec elle.
-        </Text>
-        <Bouton titre="Calibrer le micro" variante="secondaire" onPress={() => router.push('/calibration')} />
       </Carte>
 
       <MiseAJour />

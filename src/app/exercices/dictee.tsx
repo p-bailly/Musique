@@ -1,7 +1,6 @@
 /**
  * Dictée musicale : l'appli joue le Do de référence puis une note mystère ;
  * il faut la reconnaître à l'oreille (boutons, ou clavier MIDI). 10 questions.
- * Le micro reste coupé : il entendrait le haut-parleur.
  */
 import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';

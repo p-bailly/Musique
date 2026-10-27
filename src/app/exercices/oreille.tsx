@@ -2,7 +2,6 @@
  * Exercices d'oreille à deux réponses, 10 questions :
  *  - « hauteur » : deux notes, la seconde est-elle plus aiguë ou plus grave ?
  *  - « accord » : un accord, est-il majeur (joyeux) ou mineur (triste) ?
- * Le micro reste coupé : il entendrait le haut-parleur.
  */
 import { Stack, useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';

@@ -1,20 +1,19 @@
 /**
  * Cartes flash : une note s'affiche sur la portée, il faut trouver son nom
- * (boutons, ou en la jouant au piano : micro ou clavier MIDI). Une minute
+ * (boutons, ou en la jouant sur le clavier MIDI). Une minute
  * pour donner le plus de bonnes réponses.
  */
 import { useLocalSearchParams } from 'expo-router';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
-import { BoutonMicro } from '@/components/BoutonMicro';
+import { EtatMidi } from '@/components/EtatMidi';
 import { elementsSimples, Portee } from '@/components/Portee';
 import { ReponsesNotes } from '@/components/ReponsesNotes';
 import { Text } from '@/components/Texte';
 import { Bouton, Carte } from '@/components/ui';
-import { useMicro } from '@/hooks/useMicro';
 import { CleExercice, idExercice, NiveauLecture, notesLecture, tirer, tirerCle } from '@/music/exercices';
 import { Cle, degreDansGamme, ecrireMidi, NoteEcrite, nomEcrit } from '@/music/notes';
-import { useMidi, useNotesMidi } from '@/store/Midi';
+import { useNotesMidi } from '@/store/Midi';
 import { useProgression } from '@/store/Progression';
 import { useReglages } from '@/store/Reglages';
 import { revenir } from '@/utils/navigation';
@@ -37,7 +36,6 @@ export default function CartesFlash() {
   const niveau: NiveauLecture = params.niveau === 'portee' || params.niveau === 'etendu' ? params.niveau : 'debutant';
   const { couleurs: c } = useReglages();
   const { enregistrerExercice } = useProgression();
-  const midi = useMidi();
   const { width } = useWindowDimensions();
 
   const [phase, setPhase] = useState<'jeu' | 'fini'>('jeu');
@@ -97,13 +95,6 @@ export default function CartesFlash() {
     [carte, repondre],
   );
   useNotesMidi(jouee);
-  const auMicro = !midi.connecte;
-  const micro = useMicro({ onNotes: (midis) => jouee(midis[0]) });
-  const demarrerMicro = micro.demarrer;
-  useEffect(() => {
-    if (auMicro) demarrerMicro();
-  }, [auMicro, demarrerMicro]);
-
   const recommencer = () => {
     scoreRef.current = 0;
     setScore(0);
@@ -140,13 +131,7 @@ export default function CartesFlash() {
         <View style={[styles.barre, { backgroundColor: c.surfaceAlt }]}>
           <View style={[styles.temps, { width: `${(restant / DUREE_S) * 100}%`, backgroundColor: restant < 10 ? c.erreur : c.primaire }]} />
         </View>
-        <BoutonMicro
-          etat={micro.etat}
-          niveau={micro.niveau}
-          derniereNote={micro.derniereNote}
-          onPress={() => (micro.etat === 'actif' ? micro.arreter() : micro.demarrer())}
-          midi={midi.connecte}
-        />
+        <EtatMidi />
       </View>
 
       <Carte style={[styles.portee, { width: largeur + 32 }]}>

@@ -11,11 +11,11 @@ const lecteurs = new Map<number, AudioPlayer>();
 let modeConfigure = false;
 
 /** Configure la session audio (son même en mode silencieux sur iPhone). */
-export async function configurerAudio(avecMicro = false) {
+export async function configurerAudio() {
   try {
     await setAudioModeAsync({
       playsInSilentMode: true,
-      allowsRecording: avecMicro,
+      allowsRecording: false,
       shouldRouteThroughEarpiece: false,
       interruptionMode: 'mixWithOthers',
     });

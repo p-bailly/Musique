@@ -21,8 +21,6 @@ import { useRefActuelle } from './useRefActuelle';
 
 export type EtatNote = 'attente' | 'reussie' | 'manquee';
 export type Phase = 'pret' | 'enCours' | 'pause' | 'termine';
-/** D'où vient la note : micro (vrai piano) ou clavier MIDI. */
-export type SourceNote = 'micro' | 'midi';
 
 export interface Retour {
   type: 'ok' | 'erreur';
@@ -44,12 +42,6 @@ export interface Bilan {
 const TOLERANCE_S = 0.3;
 /** En mode attente, on peut jouer la note un peu avant qu'elle n'arrive (en temps). */
 const AVANCE_ACCEPTEE = 1.5;
-/** Écarts (en demi-tons) des harmoniques 2 à 6 d'une note : octave, douzième, double octave… */
-const HARMONIQUES = [12, 19, 24, 28, 31];
-/** Au micro, après un accord réussi, la fin de la frappe est ignorée pendant ce délai. */
-const MICRO_APRES_ACCORD_MS = 250;
-/** Au micro, une même fausse note n'est comptée qu'une fois pendant ce délai (résonance). */
-const ANTI_REBOND_MICRO_MS = 700;
 
 interface Options {
   lecon: Lecon;
@@ -84,8 +76,6 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin, onBattement }
     debutPartie: 0,
     phase: 'pret' as Phase,
     idRetour: 0,
-    derniereErreur: { pc: -1, quand: 0 },
-    microIgnoreJusqua: 0,
   });
   const onFinRef = useRefActuelle(onFin);
   const onBattementRef = useRefActuelle(onBattement);
@@ -140,8 +130,6 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin, onBattement }
       erreurs: 0,
       manquees: 0,
       debutPartie: Date.now(),
-      derniereErreur: { pc: -1, quand: 0 },
-      microIgnoreJusqua: 0,
     };
     setTemps(-avantDebut);
     setGroupe(0);
@@ -240,7 +228,7 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin, onBattement }
 
   /** Une note vient d'être jouée sur un clavier MIDI (hauteur exacte). */
   const jouer = useCallback(
-    (midi: number, _source: SourceNote) => {
+    (midi: number) => {
       const s = r.current;
       if (s.phase !== 'enCours') return;
       const groupes = lecon.groupes;
@@ -269,67 +257,6 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin, onBattement }
     [lecon],
   );
 
-  /**
-   * Notes entendues au micro lors d'une même frappe, de la plus forte à la plus faible.
-   *
-   * Le micro entend aussi les harmoniques et la résonance du piano : on ne regarde que
-   * l'accord à jouer maintenant (jamais le suivant), on ignore le micro un court instant
-   * après chaque accord réussi, et seule la note la plus forte peut compter comme fausse.
-   */
-  const jouerMicro = useCallback(
-    (midis: number[]) => {
-      const s = r.current;
-      if (s.phase !== 'enCours' || !midis.length) return;
-      const maintenant = Date.now();
-      if (maintenant < s.microIgnoreJusqua) return;
-      const groupes = lecon.groupes;
-      const g = groupes[s.groupe];
-      if (!g) return;
-      const avanceMax = reglages.current.modeAttente ? AVANCE_ACCEPTEE : TOLERANCE_S * tempsParSeconde();
-      if (g.debut - s.temps > avanceMax) return; // trop tôt
-
-      const groupe = g.indices.map((i) => lecon.notes[i]);
-      const restantes = () => groupe.filter((n) => s.etats[n.index] === 'attente');
-      // L'octave n'est pas vérifiée au micro : un même nom couvre toutes ses octaves
-      const classes = new Set(midis.map((m) => m % 12));
-      const valides = restantes().filter((n) => classes.has(n.midi % 12));
-      if (valides.length) {
-        // Une note qui tombe sur une harmonique d'une note jouée du même accord (octave,
-        // douzième…) ne peut pas être distinguée au micro : elle est validée avec elle
-        const jouees = groupe.filter((n) => s.etats[n.index] === 'reussie' || valides.includes(n));
-        valides.push(
-          ...restantes().filter((n) => !valides.includes(n) && jouees.some((j) => HARMONIQUES.includes(n.midi - j.midi))),
-        );
-        for (const n of valides) {
-          s.etats[n.index] = 'reussie';
-          s.reussies++;
-        }
-        setEtats([...s.etats]);
-        const groupeAvant = s.groupe;
-        avancer();
-        // Accord terminé : la fin de cette frappe ne doit pas compter pour le suivant
-        if (s.groupe !== groupeAvant) s.microIgnoreJusqua = maintenant + MICRO_APRES_ACCORD_MS;
-        signaler('ok', valides[0].midi, 'Bravo !');
-        return;
-      }
-
-      // Rien de juste : seule la note la plus forte peut être une vraie fausse note
-      const forte = midis[0];
-      const pc = forte % 12;
-      // La résonance d'une note juste, ou une même fausse note, ne compte qu'une fois
-      if (s.derniereErreur.pc === pc && maintenant - s.derniereErreur.quand < ANTI_REBOND_MICRO_MS) return;
-      if (lecon.notes.some((n) => s.etats[n.index] === 'reussie' && n.midi % 12 === pc && Math.abs(n.debut - s.temps) < 2)) {
-        return;
-      }
-      // Une harmonique d'une note attendue (sa quinte au-dessus de l'octave…) n'est pas une erreur
-      if (restantes().some((n) => HARMONIQUES.some((h) => (n.midi + h) % 12 === pc))) return;
-      s.derniereErreur = { pc, quand: maintenant };
-      compterErreur(forte, restantes());
-    },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [lecon],
-  );
-
   const g = lecon.groupes[groupe];
   return {
     phase,
@@ -344,7 +271,6 @@ export function useMoteurJeu({ lecon, vitesse, modeAttente, onFin, onBattement }
     demarrer,
     basculerPause,
     jouer,
-    jouerMicro,
     /** Notes du groupe actuel qui restent à jouer. */
     attendues: g ? g.indices.filter((i) => etats[i] === 'attente').map((i) => lecon.notes[i]) : [],
   };

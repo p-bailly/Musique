@@ -1,8 +1,8 @@
 # Solfège Piano
 
 Application mobile (iOS et Android) pour **apprendre le solfège et le piano** quand on est grand débutant :
-lire les notes sur la portée et les jouer sur son vrai piano. Le téléphone, posé sur le pupitre, écoute au
-micro et vérifie chaque note (ou un clavier MIDI). Partition, notes qui tombent, ou les deux.
+lire les notes sur la portée et les jouer sur un clavier MIDI (USB ou Bluetooth) relié au téléphone, qui
+vérifie chaque note. Partition, notes qui tombent, ou les deux.
 42 leçons en 8 niveaux (jusqu'à la Lettre à Élise originale), exercices de lecture et d'oreille, piano
 libre, mise à jour depuis l'appli.
 
@@ -20,7 +20,7 @@ npx expo start      # puis scanner le QR code avec Expo Go (Android) ou l'appare
 ```
 
 Téléphone et ordinateur sur le même Wi-Fi, sinon `npx expo start --tunnel`. Le clavier MIDI n'est pas
-disponible dans Expo Go.
+disponible dans Expo Go : on y voit l'interface, mais pour jouer il faut l'APK.
 
 ## Installer l'APK Android
 
@@ -33,7 +33,7 @@ voir [CLAUDE.md](CLAUDE.md).
 ## Développement
 
 `npm run typecheck` · `npm run lint` · `npm test` · `npm run sons` (régénère les sons, ffmpeg requis) ·
-`npm run icones` (régénère les icônes). Architecture, micro, MIDI, release : voir [CLAUDE.md](CLAUDE.md).
+`npm run icones` (régénère les icônes). Architecture, MIDI, release : voir [CLAUDE.md](CLAUDE.md).
 
 Les leçons sont des fichiers JSON dans `src/data/niveaux/` (format complet dans [CLAUDE.md](CLAUDE.md)) :
 
