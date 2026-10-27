@@ -14,6 +14,8 @@ import niveau5 from './niveaux/niveau5.json';
 import niveau6 from './niveaux/niveau6.json';
 import niveau7 from './niveaux/niveau7.json';
 import niveau8 from './niveaux/niveau8.json';
+import niveau9 from './niveaux/niveau9.json';
+import niveau10 from './niveaux/niveau10.json';
 
 /* ---------- Format des fichiers JSON ---------- */
 
@@ -279,7 +281,7 @@ export function compilerLecon(json: LeconJSON, niveau: number): Lecon {
   };
 }
 
-const SOURCES = [niveau1, niveau2, niveau3, niveau4, niveau5, niveau6, niveau7, niveau8] as NiveauJSON[];
+const SOURCES = [niveau1, niveau2, niveau3, niveau4, niveau5, niveau6, niveau7, niveau8, niveau9, niveau10] as NiveauJSON[];
 
 /** Tous les niveaux, dans l'ordre. */
 export const NIVEAUX: Niveau[] = SOURCES.map((n) => ({

@@ -3,8 +3,8 @@
 Application mobile (iOS et Android) pour **apprendre le solfège et le piano** quand on est grand débutant :
 lire les notes sur la portée et les jouer sur un clavier MIDI (USB ou Bluetooth) relié au téléphone, qui
 vérifie chaque note. Partition, notes qui tombent, ou les deux.
-42 leçons en 8 niveaux (jusqu'à la Lettre à Élise originale), exercices de lecture et d'oreille, piano
-libre, mise à jour depuis l'appli.
+56 leçons en 10 niveaux (de la première note à la Marche turque, avec gammes et arpèges), exercices de
+lecture et d'oreille, piano libre, mise à jour depuis l'appli.
 
 React Native + Expo (SDK 58) · TypeScript · 100 % hors-ligne, sans compte ni serveur.
 
@@ -47,5 +47,5 @@ Les leçons sont des fichiers JSON dans `src/data/niveaux/` (format complet dans
 
 Sons de piano : *Salamander Grand Piano V3* d'Alexander Holm, licence
 [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/). Mélodies du domaine public, sauf *Comptine d'un autre été* de Yann Tiersen (arrangement simplifié du début).
-Pièces classiques du niveau 8 transcrites d'après les éditions du [Mutopia Project](https://www.mutopiaproject.org/)
-(domaine public).
+Pièces classiques des niveaux 8 et 10 transcrites d'après les éditions du [Mutopia Project](https://www.mutopiaproject.org/)
+(placées dans le domaine public par leurs auteurs : Allen Garvin, Ying-Chun Liu, Brian D. Rude, Rune Zedeler et Chris Sawer pour le niveau 10).
