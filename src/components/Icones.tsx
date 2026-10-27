@@ -5,13 +5,16 @@
 import React from 'react';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
-export type NomIcone = 'retour' | 'lecture' | 'pause' | 'cadenas' | 'etoile' | 'reglages';
+export type NomIcone = 'retour' | 'lecture' | 'pause' | 'cadenas' | 'etoile' | 'reglages' | 'chevron';
 
 export function Icone({ nom, taille = 22, couleur }: { nom: NomIcone; taille?: number; couleur: string }) {
   return (
     <Svg width={taille} height={taille} viewBox="0 0 24 24">
       {nom === 'retour' && (
         <Path d="M15 5l-7 7 7 7" stroke={couleur} strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      )}
+      {nom === 'chevron' && (
+        <Path d="M6 9l6 6 6-6" stroke={couleur} strokeWidth={2.8} strokeLinecap="round" strokeLinejoin="round" fill="none" />
       )}
       {nom === 'lecture' && <Path d="M7 4.5v15l12.5-7.5z" fill={couleur} strokeLinejoin="round" />}
       {nom === 'pause' && (
